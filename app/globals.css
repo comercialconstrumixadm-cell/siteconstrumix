@@ -325,3 +325,117 @@ button { font-family: inherit; cursor: pointer; border: 0; background: 0 0; }
   .footer .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
   .container { padding: 0 18px; }
 }
+
+/* ============ New Keyframes ============ */
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.65); }
+}
+@keyframes scrollLine {
+  0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform-origin: bottom; }
+  85% { opacity: 1; }
+  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+}
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+@keyframes stepLineGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ============ Hero responsive ============ */
+@media (max-width: 860px) {
+  .hero-grid { grid-template-columns: 1fr !important; }
+  .hero-right { display: none !important; }
+}
+
+/* ============ Marquee strip ============ */
+.marquee-wrap { overflow: hidden; }
+.marquee-track {
+  display: inline-flex;
+  animation: marqueeScroll 30s linear infinite;
+  will-change: transform;
+}
+.marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+
+/* ============ Nav compact mode ============ */
+.nav { transition: box-shadow 0.3s; }
+.nav-compact { box-shadow: 0 4px 20px rgba(15,40,20,.10); }
+.nav-compact .nav-row { height: 56px !important; }
+.nav-compact .brand-mark { width: 38px !important; height: 38px !important; border-radius: 10px !important; }
+.nav-compact .brand-name .big { font-size: 20px !important; }
+
+/* ============ 3D tilt cards ============ */
+.tilt-card { transform-style: preserve-3d; will-change: transform; }
+
+/* ============ Step cards ============ */
+.step-card {
+  position: relative;
+  overflow: hidden;
+}
+.step-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+  animation: shimmer 5s ease-in-out infinite;
+}
+
+/* ============ Animated CTA ============ */
+.cta-gradient {
+  background: linear-gradient(270deg, #0a3d16, #1a8a2e, #0f5e20, #0d4a1a);
+  background-size: 400% 400%;
+  animation: gradientFlow 10s ease infinite;
+}
+
+/* ============ Progress bars ============ */
+.prog-bar {
+  height: 3px;
+  border-radius: 99px;
+  background: var(--green-50);
+  overflow: hidden;
+}
+.prog-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--green-700), var(--green-500));
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+/* ============ Testimonial marquee ============ */
+.testimonials-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+/* ============ Stats bar ============ */
+.stats-bar {
+  background: var(--green-700);
+  color: #fff;
+}
+
+/* ============ Section divider ============ */
+.wave-divider { display: block; width: 100%; overflow: hidden; line-height: 0; }
+
+/* ============ Extra mobile fixes ============ */
+@media (max-width: 640px) {
+  .why-grid { grid-template-columns: 1fr !important; }
+  .steps-grid { grid-template-columns: 1fr !important; }
+}

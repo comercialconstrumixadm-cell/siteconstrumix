@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import BrandLogo from './BrandLogo';
@@ -16,9 +16,16 @@ const links = [
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setCompact(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className="nav">
+    <header className={`nav${compact ? ' nav-compact' : ''}`}>
       <div className="container nav-row">
         <Link href="/" onClick={() => setOpen(false)}>
           <BrandLogo />
@@ -47,6 +54,7 @@ export default function Nav() {
           {open ? <CloseIcon /> : <MenuIcon />}
         </button>
       </div>
+
       {open && (
         <div style={{ borderTop: '1px solid var(--line)', background: '#fff', padding: '12px 18px' }}>
           {links.map((l) => (
