@@ -1,5 +1,7 @@
+'use client';
 import { Product, waLink } from '@/lib/data';
 import { WhatsAppIcon } from './Icons';
+import { pixelContact } from '@/lib/pixel';
 
 interface ProductCardProps {
   product: Product;
@@ -36,8 +38,14 @@ export default function ProductCard({ product: p }: ProductCardProps) {
             {p.unit && <span style={{ fontSize: 13, color: 'var(--muted)', marginLeft: 6, fontFamily: 'Inter', fontWeight: 600 }}>/{p.unit}</span>}
           </div>
         </div>
-        <a className="btn btn-wa" target="_blank" rel="noopener noreferrer" style={{ marginTop: 10, padding: '10px 14px', fontSize: 13 }}
-          href={waLink(`Olá! Tenho interesse no ${p.name}. Pode me passar mais detalhes?`)}>
+        <a
+          className="btn btn-wa"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ marginTop: 10, padding: '10px 14px', fontSize: 13 }}
+          href={waLink(`Olá! Tenho interesse no ${p.name}. Pode me passar mais detalhes?`)}
+          onClick={() => pixelContact()}
+        >
           <WhatsAppIcon width={16} height={16} /> Tenho interesse
         </a>
       </div>

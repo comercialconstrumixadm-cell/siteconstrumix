@@ -9,6 +9,7 @@ import {
   ArrowIcon, WhatsAppIcon, DocIcon, StarIcon, GridIcon,
 } from '@/components/Icons';
 import { CATEGORIES, PRODUCTS, TESTIMONIALS, waLink } from '@/lib/data';
+import { pixelContact, pixelLead, pixelButtonClick } from '@/lib/pixel';
 
 /* ─── Strip items for infinite marquee ─── */
 const STRIP_ITEMS = [
@@ -262,6 +263,7 @@ export default function HomePage() {
                 key={cat.slug}
                 href={`/produtos?cat=${cat.slug}`}
                 className="cat-card tilt-card card"
+                onClick={() => pixelButtonClick(cat.title, 'categorias', `/produtos?cat=${cat.slug}`)}
                 style={{
                   textAlign: 'left', display: 'flex', flexDirection: 'column',
                   gap: 14, padding: 24, minHeight: 200,
@@ -427,6 +429,7 @@ export default function HomePage() {
             className="btn btn-primary btn-lg"
             target="_blank" rel="noopener noreferrer"
             href={waLink('Olá! Quero usar o cupom OBRA15 e fazer meu primeiro pedido.')}
+            onClick={() => pixelContact()}
           >
             <WhatsAppIcon /> PEGAR DESCONTO
           </a>
@@ -450,7 +453,8 @@ export default function HomePage() {
                 OFERTAS QUE<br />VALEM A OBRA.
               </h2>
             </div>
-            <Link className="btn btn-outline" href="/produtos">
+            <Link className="btn btn-outline" href="/produtos"
+              onClick={() => pixelButtonClick('Ver todos', 'destaques', '/produtos')}>
               Ver todos <ArrowIcon />
             </Link>
           </div>
@@ -720,10 +724,12 @@ export default function HomePage() {
               className="btn btn-wa btn-lg"
               target="_blank" rel="noopener noreferrer"
               href={waLink('Olá! Quero fazer um orçamento rápido.')}
+              onClick={() => pixelContact()}
             >
               <WhatsAppIcon /> CHAMAR NO WHATSAPP
             </a>
-            <Link className="btn btn-yellow btn-lg" href="/orcamento">
+            <Link className="btn btn-yellow btn-lg" href="/orcamento"
+              onClick={() => pixelLead()}>
               <DocIcon /> FAZER ORÇAMENTO
             </Link>
           </div>

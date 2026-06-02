@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import BrandLogo from './BrandLogo';
 import { HomeIcon, GridIcon, MapPinIcon, DocIcon, WhatsAppIcon, MenuIcon, CloseIcon } from './Icons';
 import { waLink } from '@/lib/data';
+import { pixelContact } from '@/lib/pixel';
 
 const links = [
   { to: '/', label: 'Início', Icon: HomeIcon },
@@ -46,6 +47,7 @@ export default function Nav() {
             target="_blank"
             rel="noopener noreferrer"
             href={waLink('Olá! Vim pelo site da Construmix e gostaria de tirar uma dúvida.')}
+            onClick={() => pixelContact()}
           >
             <WhatsAppIcon /> WhatsApp
           </a>
@@ -78,6 +80,7 @@ export default function Nav() {
             target="_blank"
             rel="noopener noreferrer"
             href={waLink('Olá! Vim pelo site da Construmix.')}
+            onClick={() => pixelContact()}
           >
             <WhatsAppIcon /> Chamar no WhatsApp
           </a>

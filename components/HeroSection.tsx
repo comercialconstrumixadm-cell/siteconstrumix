@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Mascot from './Mascot';
 import { WhatsAppIcon, ArrowIcon, CheckIcon } from './Icons';
 import { waLink } from '@/lib/data';
+import { pixelContact, pixelButtonClick } from '@/lib/pixel';
 
 const TITLE_LINES = [
   { text: 'Sua obra', yellow: false },
@@ -237,12 +238,14 @@ export default function HeroSection() {
                 className="btn btn-yellow btn-lg"
                 target="_blank" rel="noopener noreferrer"
                 href={waLink('Olá! Quero fazer um orçamento rápido pelo WhatsApp.')}
+                onClick={() => pixelContact()}
               >
                 <WhatsAppIcon /> ORÇAMENTO NO ZAP
               </a>
               <Link
                 href="/produtos"
                 className="btn btn-lg"
+                onClick={() => pixelButtonClick('Ver Produtos', 'hero', '/produtos')}
                 style={{
                   background: 'rgba(255,255,255,.09)', color: '#fff',
                   border: '1.5px solid rgba(255,255,255,.26)',

@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { TruckIcon, PackageIcon, HomeIcon, ShieldIcon, MapPinIcon, ClockIcon, PhoneIcon, CheckIcon, ArrowIcon, WhatsAppIcon } from '@/components/Icons';
 import { waLink } from '@/lib/data';
+import { pixelContact, pixelButtonClick } from '@/lib/pixel';
 
 function OpenBadge() {
   const now = new Date();
@@ -150,6 +151,10 @@ function InfoCard({ icon: IconComp, title, lines, cta, badge }: InfoCardProps) {
           className={`btn ${cta.wa ? 'btn-wa' : 'btn-outline'}`}
           style={{ marginTop: 16, padding: '11px 14px', fontSize: 13 }}
           target="_blank" rel="noopener noreferrer" href={cta.href}
+          onClick={() => cta.wa
+            ? pixelContact()
+            : pixelButtonClick(cta.label, `info_${title.toLowerCase()}`, cta.href)
+          }
         >
           {cta.wa ? <WhatsAppIcon width={16} height={16} /> : null}
           {cta.label} {!cta.wa && <ArrowIcon width={14} height={14} />}
@@ -341,7 +346,8 @@ export default function LocalizacaoPage() {
                 ))}
               </ul>
               <a className="btn btn-yellow" target="_blank" rel="noopener noreferrer"
-                href={waLink('Olá! Quero saber sobre prazo e frete pra minha cidade.')}>
+                href={waLink('Olá! Quero saber sobre prazo e frete pra minha cidade.')}
+                onClick={() => pixelContact()}>
                 <WhatsAppIcon /> CONSULTAR FRETE
               </a>
             </div>

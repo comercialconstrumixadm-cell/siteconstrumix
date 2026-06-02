@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { CATEGORIES, waLink } from '@/lib/data';
+import { pixelContact, pixelLead, pixelButtonClick } from '@/lib/pixel';
 import { WhatsAppIcon, CheckIcon, ArrowIcon, CloseIcon, DocIcon } from '@/components/Icons';
 
 interface OrcData {
@@ -185,7 +186,7 @@ export default function OrcamentoPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-                    <button className="btn btn-primary btn-lg" disabled={!canNext1} onClick={() => setStep(2)}
+                    <button className="btn btn-primary btn-lg" disabled={!canNext1} onClick={() => { setStep(2); pixelButtonClick('Próximo — Dados', 'orcamento_step1', 'step2'); }}
                       style={!canNext1 ? { opacity: 0.45, cursor: 'not-allowed' } : {}}>
                       Próximo <ArrowIcon />
                     </button>
@@ -248,7 +249,7 @@ export default function OrcamentoPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
                     <button className="btn btn-ghost" onClick={() => setStep(1)}>← Voltar</button>
-                    <button className="btn btn-primary btn-lg" disabled={!canNext2} onClick={() => setStep(3)}
+                    <button className="btn btn-primary btn-lg" disabled={!canNext2} onClick={() => { setStep(3); pixelButtonClick('Próximo — Itens', 'orcamento_step2', 'step3'); }}
                       style={!canNext2 ? { opacity: 0.45, cursor: 'not-allowed' } : {}}>
                       Próximo <ArrowIcon />
                     </button>
@@ -285,10 +286,11 @@ export default function OrcamentoPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, gap: 10, flexWrap: 'wrap' }}>
                     <button className="btn btn-ghost" onClick={() => setStep(2)}>← Voltar</button>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <a className="btn btn-wa btn-lg" target="_blank" rel="noopener noreferrer" href={waLink(buildMessage())}>
+                      <a className="btn btn-wa btn-lg" target="_blank" rel="noopener noreferrer" href={waLink(buildMessage())}
+                        onClick={() => { pixelContact(); pixelLead(); }}>
                         <WhatsAppIcon /> ENVIAR PELO WHATSAPP
                       </a>
-                      <button className="btn btn-primary btn-lg" onClick={() => setStep(4)}>
+                      <button className="btn btn-primary btn-lg" onClick={() => { setStep(4); pixelLead(); }}>
                         Enviar orçamento <ArrowIcon />
                       </button>
                     </div>
@@ -307,10 +309,14 @@ export default function OrcamentoPage() {
                     com o orçamento completo, {data.canal === 'email' ? 'pelo e-mail' : data.canal === 'ambos' ? 'pelo WhatsApp e e-mail' : 'pelo WhatsApp'}.
                   </p>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <a className="btn btn-wa btn-lg" target="_blank" rel="noopener noreferrer" href={waLink(buildMessage())}>
+                    <a className="btn btn-wa btn-lg" target="_blank" rel="noopener noreferrer" href={waLink(buildMessage())}
+                      onClick={() => pixelContact()}>
                       <WhatsAppIcon /> Falar agora no WhatsApp
                     </a>
-                    <Link className="btn btn-outline btn-lg" href="/produtos">Ver mais produtos</Link>
+                    <Link className="btn btn-outline btn-lg" href="/produtos"
+                      onClick={() => pixelButtonClick('Ver mais produtos', 'orcamento_confirmacao', '/produtos')}>
+                      Ver mais produtos
+                    </Link>
                   </div>
                   <div style={{ marginTop: 32, padding: 20, background: 'var(--bg)', borderRadius: 14, textAlign: 'left' }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--green-700)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>Resumo enviado</div>
@@ -332,7 +338,8 @@ export default function OrcamentoPage() {
                   Atendimento humano de segunda a sábado. Você manda fotos, lista, áudio — a gente cota tudo na hora.
                 </p>
                 <a className="btn btn-wa" style={{ width: '100%' }} target="_blank" rel="noopener noreferrer"
-                  href={waLink('Olá! Quero falar com um vendedor pra fazer um orçamento.')}>
+                  href={waLink('Olá! Quero falar com um vendedor pra fazer um orçamento.')}
+                  onClick={() => pixelContact()}>
                   <WhatsAppIcon /> (79) 99919-6363
                 </a>
               </div>

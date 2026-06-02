@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import Mascot from '@/components/Mascot';
 import { SearchIcon, DocIcon, WhatsAppIcon } from '@/components/Icons';
 import { CATEGORIES, PRODUCTS, waLink } from '@/lib/data';
+import { pixelContact, pixelLead, pixelButtonClick } from '@/lib/pixel';
 
 function ProdutosContent() {
   const searchParams = useSearchParams();
@@ -130,7 +131,7 @@ function ProdutosContent() {
       <section style={{ padding: '28px 0 0' }}>
         <div className="container" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
-            onClick={() => setActive('todos')}
+            onClick={() => { setActive('todos'); pixelButtonClick('Todos', 'filtros_categoria', 'todos'); }}
             style={{
               padding: '10px 16px', borderRadius: 99,
               background: active === 'todos' ? 'var(--green-700)' : '#fff',
@@ -144,7 +145,7 @@ function ProdutosContent() {
           {CATEGORIES.map((c) => (
             <button
               key={c.slug}
-              onClick={() => setActive(c.slug)}
+              onClick={() => { setActive(c.slug); pixelButtonClick(c.title, 'filtros_categoria', c.slug); }}
               style={{
                 padding: '10px 16px', borderRadius: 99,
                 background: active === c.slug ? 'var(--green-700)' : '#fff',
@@ -167,7 +168,8 @@ function ProdutosContent() {
               <div style={{ fontFamily: "'Anton',sans-serif", fontSize: 32, color: 'var(--ink)' }}>Nenhum produto encontrado</div>
               <p style={{ color: 'var(--muted)', marginTop: 8 }}>Tente outro filtro ou chame a gente no WhatsApp — temos muito mais em estoque!</p>
               <a className="btn btn-wa" style={{ marginTop: 20 }} target="_blank" rel="noopener noreferrer"
-                href={waLink('Olá! Não achei o que precisava no site. Vocês têm?')}>
+                href={waLink('Olá! Não achei o que precisava no site. Vocês têm?')}
+                onClick={() => pixelContact()}>
                 <WhatsAppIcon /> Perguntar no WhatsApp
               </a>
             </div>
@@ -204,10 +206,12 @@ function ProdutosContent() {
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <a className="btn btn-yellow" target="_blank" rel="noopener noreferrer"
-                  href={waLink('Olá! Tenho uma lista de materiais. Pode me cotar?')}>
+                  href={waLink('Olá! Tenho uma lista de materiais. Pode me cotar?')}
+                  onClick={() => pixelContact()}>
                   <WhatsAppIcon /> ENVIAR MINHA LISTA
                 </a>
                 <Link className="btn btn-outline" href="/orcamento"
+                  onClick={() => pixelLead()}
                   style={{ background: 'rgba(255,255,255,.08)', color: '#fff', borderColor: 'rgba(255,255,255,.3)' }}>
                   <DocIcon /> Orçamento online
                 </Link>

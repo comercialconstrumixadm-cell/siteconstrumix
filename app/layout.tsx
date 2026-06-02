@@ -5,6 +5,7 @@ import TopBar from '@/components/TopBar';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import FabWhatsApp from '@/components/FabWhatsApp';
+import MetaPixel from '@/components/MetaPixel';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const anton = Anton({ subsets: ['latin'], weight: '400', variable: '--font-anton' });
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`${inter.variable} ${anton.variable}`}>
       <body>
+        <MetaPixel />
         <TopBar />
         <Nav />
         <main>{children}</main>
