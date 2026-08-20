@@ -1,0 +1,22 @@
+[
+  { "codigo": "1001", "nome": "Porta de Madeira Maciça Almofadada 80cm", "categoria": "Portas", "unidade": "un", "preco": 389.0 },
+  { "codigo": "1002", "nome": "Porta Pré-Pintada Branca 60cm", "categoria": "Portas", "unidade": "un", "preco": 259.9 },
+  { "codigo": "1003", "nome": "Porta Pré-Pintada Branca 70cm", "categoria": "Portas", "unidade": "un", "preco": 269.9 },
+  { "codigo": "1004", "nome": "Batente de Madeira Angelim 80cm", "categoria": "Portas", "unidade": "un", "preco": 159.0 },
+  { "codigo": "1005", "nome": "Marco/Batente Ajustável 60-90cm", "categoria": "Portas", "unidade": "un", "preco": 179.0 },
+  { "codigo": "1006", "nome": "Fechadura Externa Cromada", "categoria": "Portas", "unidade": "un", "preco": 89.9 },
+  { "codigo": "1007", "nome": "Fechadura Interna Rolete", "categoria": "Portas", "unidade": "un", "preco": 45.0 },
+  { "codigo": "1008", "nome": "Dobradiça 3.5 Polegadas Cromada", "categoria": "Portas", "unidade": "par", "preco": 12.5 },
+  { "codigo": "2001", "nome": "Cimento CP-II Saco 50kg Votoran", "categoria": "Fundição", "unidade": "sc", "preco": 38.9 },
+  { "codigo": "2002", "nome": "Cimento CP-V Saco 50kg", "categoria": "Fundição", "unidade": "sc", "preco": 41.5 },
+  { "codigo": "2003", "nome": "Areia Lavada m³", "categoria": "Fundição", "unidade": "m3", "preco": 120.0 },
+  { "codigo": "2004", "nome": "Bloco de Concreto 14x19x39", "categoria": "Fundição", "unidade": "un", "preco": 3.5 },
+  { "codigo": "3001", "nome": "Porcelanato Acetinado 84x84 Marmorizado", "categoria": "Pisos", "unidade": "m2", "preco": 42.9 },
+  { "codigo": "3002", "nome": "Cerâmica Esmaltada 60x60 Bege Acetinado", "categoria": "Pisos", "unidade": "m2", "preco": 32.9 },
+  { "codigo": "4001", "nome": "Tinta Acrílica Premium Suvinil 18L Branco", "categoria": "Tintas", "unidade": "un", "preco": 269.0 },
+  { "codigo": "4002", "nome": "Massa Corrida PVA 25kg Coral", "categoria": "Tintas", "unidade": "un", "preco": 79.9 },
+  { "codigo": "5001", "nome": "Tubo PVC Soldável 25mm Tigre Barra 6m", "categoria": "Hidráulica", "unidade": "barra", "preco": 38.5 },
+  { "codigo": "5002", "nome": "Caixa d'Água 1000L Polietileno Fortlev", "categoria": "Hidráulica", "unidade": "un", "preco": 489.0 },
+  { "codigo": "6001", "nome": "Fio Flexível 2,5mm 100m Antichama", "categoria": "Elétrica", "unidade": "rolo", "preco": 189.0 },
+  { "codigo": "7001", "nome": "Torneira Monocomando Banheiro Cromada", "categoria": "Metais", "unidade": "un", "preco": 179.0 }
+]

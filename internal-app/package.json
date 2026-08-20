@@ -1,0 +1,34 @@
+{
+  "name": "gestao-orcamento-construmix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "App interno de Gestão + Orçamento da Construmix, integrado ao Zeus (Firebird).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed": "tsx scripts/seed-catalog.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "next": "14.2.5",
+    "node-firebird": "^1.1.9",
+    "pdf-lib": "^1.17.1",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5",
+    "vitest": "^2.1.1"
+  }
+}
