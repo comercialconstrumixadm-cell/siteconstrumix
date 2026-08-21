@@ -23,7 +23,10 @@ export default function OrcamentoPage() {
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteTelefone, setClienteTelefone] = useState('');
+  const [clienteEndereco, setClienteEndereco] = useState('');
   const [vendedor, setVendedor] = useState('');
+  const [desconto, setDesconto] = useState('0');
+  const [formaPagamento, setFormaPagamento] = useState('Dinheiro');
   const [gerando, setGerando] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -61,7 +64,9 @@ export default function OrcamentoPage() {
     setItens((atual) => atual.filter((i) => i.codigo !== codigo));
   }
 
-  const total = itens.reduce((soma, item) => soma + item.quantidade * item.preco, 0);
+  const subtotal = itens.reduce((soma, item) => soma + item.quantidade * item.preco, 0);
+  const descontoNum = Math.max(0, Number(desconto) || 0);
+  const total = Math.max(0, subtotal - descontoNum);
 
   async function gerarOrcamento() {
     setGerando(true);
@@ -74,7 +79,16 @@ export default function OrcamentoPage() {
           vendedor: vendedor || undefined,
           clienteNome: clienteNome || undefined,
           clienteTelefone: clienteTelefone || undefined,
-          itens: itens.map((i) => ({ codigo: i.codigo, nome: i.nome, quantidade: i.quantidade, precoUnitario: i.preco })),
+          clienteEndereco: clienteEndereco || undefined,
+          desconto: descontoNum || undefined,
+          formaPagamento: formaPagamento || undefined,
+          itens: itens.map((i) => ({
+            codigo: i.codigo,
+            nome: i.nome,
+            unidade: i.unidade ?? undefined,
+            quantidade: i.quantidade,
+            precoUnitario: i.preco,
+          })),
         }),
       });
       const data = await res.json();
@@ -166,7 +180,15 @@ export default function OrcamentoPage() {
             )}
           </tbody>
         </table>
-        <p style={{ textAlign: 'right', fontWeight: 700, marginTop: 12 }}>Total: {brl(total)}</p>
+        <div style={{ textAlign: 'right', marginTop: 12 }}>
+          {descontoNum > 0 && (
+            <>
+              <p style={{ color: 'var(--muted)', fontSize: 13 }}>Subtotal: {brl(subtotal)}</p>
+              <p style={{ color: 'var(--muted)', fontSize: 13 }}>Desconto: −{brl(descontoNum)}</p>
+            </>
+          )}
+          <p style={{ fontWeight: 700 }}>Total: {brl(total)}</p>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
@@ -183,6 +205,18 @@ export default function OrcamentoPage() {
           <div className="field">
             <label>Telefone</label>
             <input value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} />
+          </div>
+          <div className="field" style={{ gridColumn: '1 / -1' }}>
+            <label>Endereço (opcional)</label>
+            <input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Desconto (R$)</label>
+            <input type="number" min={0} step="0.01" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Forma de pagamento</label>
+            <input value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value)} />
           </div>
         </div>
         <button className="btn" disabled={itens.length === 0 || gerando} onClick={gerarOrcamento}>

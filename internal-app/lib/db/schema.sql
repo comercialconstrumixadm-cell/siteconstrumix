@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS bonificacao_calculada (
 );
 
 -- Índice de busca do catálogo de produtos, sincronizado periodicamente do
--- Zeus (ver lib/firebird/catalogSync.ts). FTS5 permite busca full-text
--- rápida sobre 6.000+ produtos sem sobrecarregar o Firebird de produção a
+-- Zeus (ver lib/postgres/catalogSync.ts). FTS5 permite busca full-text
+-- rápida sobre 6.000+ produtos sem sobrecarregar o Postgres de produção a
 -- cada busca do balcão.
 CREATE TABLE IF NOT EXISTS produtos (
   codigo TEXT PRIMARY KEY,
@@ -94,7 +94,10 @@ CREATE TABLE IF NOT EXISTS orcamentos (
   vendedor TEXT,
   cliente_nome TEXT,
   cliente_telefone TEXT,
-  itens_json TEXT NOT NULL, -- [{codigo, nome, quantidade, precoUnitario}]
+  cliente_endereco TEXT,
+  itens_json TEXT NOT NULL, -- [{codigo, nome, unidade, quantidade, precoUnitario}]
+  desconto REAL NOT NULL DEFAULT 0,
+  forma_pagamento TEXT,
   total REAL NOT NULL,
   observacoes TEXT
 );

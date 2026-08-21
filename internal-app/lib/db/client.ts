@@ -25,6 +25,32 @@ export function getDb(): Database.Database {
   const schemaPath = path.join(process.cwd(), 'lib/db/schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf-8');
   db.exec(schema);
+  aplicarMigracoes(db);
 
   return db;
+}
+
+/**
+ * `CREATE TABLE IF NOT EXISTS` no schema.sql não adiciona colunas novas a
+ * uma tabela que já existe (ex: um app.sqlite de uma versão anterior) —
+ * sem isso, atualizar o código quebraria qualquer banco local já criado.
+ * Migração idempotente e bem pequena: só roda o `ALTER TABLE` se a coluna
+ * ainda não existir.
+ */
+function aplicarMigracoes(db: Database.Database) {
+  const colunasExistentes = new Set(
+    (db.pragma("table_info('orcamentos')") as { name: string }[]).map((c) => c.name)
+  );
+
+  const colunasNovas: [string, string][] = [
+    ['cliente_endereco', 'TEXT'],
+    ['desconto', 'REAL NOT NULL DEFAULT 0'],
+    ['forma_pagamento', 'TEXT'],
+  ];
+
+  for (const [coluna, tipo] of colunasNovas) {
+    if (!colunasExistentes.has(coluna)) {
+      db.exec(`ALTER TABLE orcamentos ADD COLUMN ${coluna} ${tipo}`);
+    }
+  }
 }

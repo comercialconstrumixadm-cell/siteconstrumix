@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
     vendedor: salvo.vendedor,
     clienteNome: salvo.clienteNome,
     clienteTelefone: salvo.clienteTelefone,
+    clienteEndereco: salvo.clienteEndereco,
     itens: JSON.parse(salvo.itensJson),
+    desconto: salvo.desconto ?? 0,
+    formaPagamento: salvo.formaPagamento,
     total,
     observacoes: salvo.observacoes,
   });
