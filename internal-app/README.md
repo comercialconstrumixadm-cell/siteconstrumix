@@ -10,7 +10,7 @@ loja, com dois módulos:
 Este diretório é uma aplicação Next.js **separada** do site institucional
 que vive na raiz do repositório (`siteconstrumix`). O site institucional é
 exportado como HTML estático (`output: 'export'`) e não tem servidor; este
-app precisa de servidor Node (SQLite local + conexões Firebird), então foi
+app precisa de servidor Node (SQLite local + conexões PostgreSQL), então foi
 mantido isolado para não quebrar o build/deploy do site público.
 
 ## Rodando localmente
@@ -28,6 +28,37 @@ Testes da regra de bonificação (não dependem de banco nenhum):
 ```bash
 npm test
 ```
+
+## O banco do Zeus (confirmado por inspeção direta em 2026-08)
+
+A especificação original supunha Firebird/InterBase — na prática o Zeus
+roda em **PostgreSQL 9.5**, um servidor só, servindo as 3 empresas em
+bancos separados: `base_construmix`, `base_samscomercio`, `base_newhouse`
+(mais um `_images` e um `_zupdate` por empresa, que não usamos). O suporte
+do Zeus já criou um usuário de consulta dedicado (`usuario_consulta`), mais
+seguro que usar o `postgres` de administração.
+
+Tabelas relevantes já mapeadas (nomes reais, confirmados no schema):
+
+- **`prevendas`** — o pedido de venda ("prevenda" é o nome do Zeus pra
+  isso). Tem `valortotal`, `codvendedor`, `datavenda`.
+- **`prevendas_faturamento`** — não guarda valor, é só um carimbo
+  (`codprevenda` + `datahora` + usuário) marcando quando aquele pedido foi
+  faturado/fechado. É essa data que define "o mês", não a data do pedido.
+  Isso é o "faturamento de pedidos" da especificação — diferente de
+  `saidasnf_faturamento`, que é o faturamento por nota fiscal.
+- **`prevendasprod`** — itens de cada pedido, ligados a `produtos` via
+  `codproduto`.
+- **`produtos`** — catálogo (~6.000+ itens), com `codgrupo` (categoria,
+  via a tabela `grupos`) e `codncm` (código fiscal).
+- **Cimento**: o grupo interno "CIMENTO" (código 54) existe, mas boa parte
+  dos cimentos de verdade está cadastrada como "DIVERSOS" (código 1) —
+  cadastro inconsistente, como o Marcos já esperava. O NCM fiscal (2523.xx,
+  cimento Portland) é mais confiável. Regra usada:
+  `codncm LIKE '2523%' OR codgrupo = 54`.
+
+Ver `lib/postgres/construmixFaturamento.ts` e `lib/postgres/cimentoFilter.ts`
+para as queries reais escritas a partir disso.
 
 ## O que já está pronto de verdade
 
@@ -49,35 +80,29 @@ npm test
   completa como alternativa acessível, e exportação para PNG — a base para
   o requisito de "dashboards prontos para apresentação".
 - **Histórico de orçamentos** (`/gestao/orcamentos`), visível para gestão.
+- **Queries reais de faturamento de pedidos, vendas de cimento e catálogo**
+  (`lib/postgres/`), escritas a partir do schema real do Postgres do Zeus.
 
-## O que está deliberadamente pendente (precisa de informação/acesso que só o Marcos tem)
+## O que está deliberadamente pendente
 
-Estes itens não podem ser implementados de forma confiável sem os dados
-reais — foram deixados como stubs claramente marcados no código, em vez de
-lógica adivinhada que poderia gerar números errados de bonificação ou
-orçamentos incorretos:
-
-1. **Credenciais dos 3 bancos Firebird do Zeus** (Construmix, SAMS, New
-   House — mesma máquina, um `.fdb` cada). Preencher em `.env.local`
-   (ver `.env.example`). Sem isso, `lib/firebird/client.ts` lança erro
-   explicando o que falta.
-2. **Qual tabela/view do Zeus é o relatório "faturamento de pedidos"** da
-   Construmix (diferente do faturamento por NF) —
-   `lib/firebird/construmixFaturamento.ts` tem a query como placeholder.
-   Até isso ser resolvido, o faturamento mensal é lançado manualmente em
-   `/gestao/faturamento`.
-3. **Como isolar vendas de cimento** (categoria, CEST, código de produto?)
-   — `lib/firebird/cimentoFilter.ts`.
-4. **Schema real de produtos no Zeus** (nomes de tabela/coluna variam por
-   instalação) — `lib/firebird/catalogSync.ts` tem uma query placeholder
-   assumindo colunas `CODIGO/DESCRICAO/CATEGORIA/UNIDADE/PRECO`.
-5. **Modelo visual do PDF de orçamento já usado na Construmix** — `lib/pdf.ts`
-   gera um layout funcional simples que precisa ser substituído pelo
-   modelo real (cores, logo, cabeçalho/rodapé) quando o Marcos compartilhar
-   o exemplo.
-6. **Comparativos entre empresas** (`/gestao/comparativos`) — dependem dos
-   3 bancos conectados; hoje é uma tela explicando o bloqueio. O padrão de
-   dashboard exportável (gráfico + tabela + PNG) já existe em
+1. **Acesso de rede ao Postgres do Zeus.** O host confirmado até agora
+   (`127.0.0.1`) só funciona rodando na própria máquina da loja — falta um
+   endereço alcançável de fora dela (IP fixo, VPN etc) pra uma sessão
+   remota conseguir conectar de verdade. Preencher `.env.local` (ver
+   `.env.example`) assim que isso existir.
+2. **Validar os números contra a planilha de referência (META_2026).** As
+   queries de faturamento de pedidos e vendas de cimento ainda não
+   excluem cancelamentos/devoluções (tabelas `prevendas_cancelamento` e
+   `prevendas_devolucoes_*`, vistas no schema mas não inspecionadas) — e
+   achamos pelo menos um produto de cimento fora do padrão de NCM
+   ("CIMENTO BRANCO 1KG"). Comparar com números reais antes de confiar.
+3. **Modelo visual do PDF de orçamento já usado na Construmix** —
+   `lib/pdf.ts` gera um layout funcional simples que precisa ser
+   substituído pelo modelo real (cores, logo, cabeçalho/rodapé) quando o
+   Marcos compartilhar o exemplo.
+4. **Comparativos entre empresas** (`/gestao/comparativos`) — dependem do
+   item 1 (acesso de rede); hoje é uma tela explicando o bloqueio. O
+   padrão de dashboard exportável (gráfico + tabela + PNG) já existe em
    `/gestao/bonificacao/BonusCharts.tsx` e pode ser reaproveitado aqui.
 
 ## Arquitetura
@@ -98,20 +123,20 @@ internal-app/
     auth.ts             sessão do módulo Gestão
     pdf.ts               geração de PDF do orçamento
     db/                  banco próprio (SQLite): schema.sql + repositórios
-    firebird/            conectores aos 3 bancos do Zeus (stubs documentados)
+    postgres/            conectores aos 3 bancos do Zeus, com as queries
+                          reais de faturamento/cimento/catálogo já escritas
   data/mock-catalog.json amostra de produtos para dev (NÃO é o catálogo real)
   scripts/seed-catalog.ts carrega o catálogo de amostra no SQLite local
 ```
 
 ## Próximos passos (ordem sugerida)
 
-1. Marcos traz: credenciais dos 3 Firebird + qual relatório é
-   "faturamento de pedidos" + como identificar cimento + modelo do PDF.
-2. Inspecionar o schema real de cada banco antes de trocar qualquer query
-   placeholder (nomes de tabela podem variar entre as 3 instalações).
-3. Ligar `lib/firebird/construmixFaturamento.ts` e `cimentoFilter.ts` de
-   verdade e validar o ABATIMENTO calculado contra a planilha META_2026.
-4. Ligar `lib/firebird/catalogSync.ts` com o schema real e agendar a
-   sincronização periódica do catálogo (6.000+ produtos).
-5. Substituir o layout de `lib/pdf.ts` pelo modelo real da Construmix.
-6. Implementar `/gestao/comparativos` com os 3 bancos conectados.
+1. Resolver o acesso de rede ao Postgres (item 1 acima) — sem isso nada
+   mais aqui pode ser testado contra dados reais.
+2. Rodar `lib/postgres/construmixFaturamento.ts` e `cimentoFilter.ts`
+   contra o banco real e validar o ABATIMENTO calculado contra a planilha
+   META_2026 — ajustar a exclusão de cancelamentos/devoluções se precisar.
+3. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
+   periódica do catálogo (6.000+ produtos).
+4. Substituir o layout de `lib/pdf.ts` pelo modelo real da Construmix.
+5. Implementar `/gestao/comparativos` com os 3 bancos conectados.

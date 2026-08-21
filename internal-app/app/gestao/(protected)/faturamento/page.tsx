@@ -15,9 +15,9 @@ export default function FaturamentoPage() {
       <h1 style={{ marginBottom: 4 }}>Faturamento (ABATIMENTO)</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24, maxWidth: 640 }}>
         ABATIMENTO = Faturamento de pedidos do mês (Construmix) − Vendas de cimento do mês.
-        Lançamento manual até o relatório &quot;faturamento de pedidos&quot; do Zeus e o filtro
-        de cimento serem identificados e a sincronização automática ser ligada
-        (ver <code>lib/firebird/construmixFaturamento.ts</code> e <code>lib/firebird/cimentoFilter.ts</code>).
+        As queries reais já existem (ver <code>lib/postgres/construmixFaturamento.ts</code> e{' '}
+        <code>lib/postgres/cimentoFilter.ts</code>), mas o lançamento aqui ainda é manual até o
+        Postgres do Zeus estar alcançável por rede e os números validados contra a planilha.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>

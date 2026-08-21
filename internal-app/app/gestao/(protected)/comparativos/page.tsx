@@ -7,14 +7,16 @@ export default function ComparativosPage() {
       </p>
       <div className="card">
         <p>
-          Bloqueado até as 3 conexões Firebird (uma por empresa) estarem configuradas com
-          credenciais reais — ver <code>.env.example</code> e <code>lib/firebird/config.ts</code>.
-          Cada empresa tem seu próprio banco (.fdb) na mesma máquina; o app mantém 3 conexões
-          separadas e agrega os dados nesta camada.
+          Bloqueado até as 3 conexões PostgreSQL (uma por empresa) estarem alcançáveis por rede e
+          configuradas com credenciais reais — ver <code>.env.example</code> e{' '}
+          <code>lib/postgres/config.ts</code>. É um único servidor Postgres com um banco por
+          empresa (<code>base_construmix</code>, <code>base_samscomercio</code>,{' '}
+          <code>base_newhouse</code>); o app mantém 3 conexões separadas e agrega os dados nesta
+          camada.
         </p>
         <p style={{ marginTop: 12 }}>
           Quando os 3 bancos estiverem acessíveis, esta tela deve consultar faturamento por
-          empresa/mês (via módulos equivalentes a <code>lib/firebird/construmixFaturamento.ts</code>
+          empresa/mês (via módulos equivalentes a <code>lib/postgres/construmixFaturamento.ts</code>
           para SAMS e New House) e renderizar os gráficos de crescimento/faturamento com
           exportação em PDF/imagem, para uso em reunião mensal e prestação de contas.
         </p>

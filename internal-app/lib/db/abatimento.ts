@@ -3,9 +3,9 @@ import { calcularAbatimento, type MonthlyAbatimento } from '../bonus';
 
 /**
  * Lê a série de ABATIMENTO mensal salva localmente. Hoje é alimentada
- * manualmente (tela Gestão > Faturamento) até o conector Firebird da
- * Construmix (lib/firebird/construmixFaturamento.ts) ser ligado a um
- * relatório real e passar a gravar aqui via `origem = 'zeus-sync'`.
+ * manualmente (tela Gestão > Faturamento) até o conector Postgres da
+ * Construmix (lib/postgres/construmixFaturamento.ts, já com a query real)
+ * estar alcançável por rede e passar a gravar aqui via `origem = 'zeus-sync'`.
  */
 export function listAbatimentoMensal(): MonthlyAbatimento[] {
   const rows = getDb()

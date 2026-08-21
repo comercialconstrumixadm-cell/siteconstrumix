@@ -6,7 +6,7 @@ let db: Database.Database | null = null;
 
 /**
  * Retorna a conexão (singleton) com o banco de dados próprio da aplicação.
- * Não confundir com os bancos Firebird do Zeus (ver lib/firebird).
+ * Não confundir com os bancos PostgreSQL do Zeus (ver lib/postgres).
  */
 export function getDb(): Database.Database {
   if (db) return db;

@@ -1,8 +1,8 @@
 /**
  * Popula o índice local de produtos com um catálogo de amostra, para
  * desenvolvimento/demonstração do módulo Orçamento enquanto a
- * sincronização real com o Zeus (lib/firebird/catalogSync.ts) não está
- * ligada a credenciais reais. NÃO representa o catálogo real de 6.000+
+ * sincronização real com o Zeus (lib/postgres/catalogSync.ts) não está
+ * alcançável por rede. NÃO representa o catálogo real de 6.000+
  * produtos da Construmix.
  *
  * Uso: npm run seed
