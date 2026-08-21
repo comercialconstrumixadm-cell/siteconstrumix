@@ -41,9 +41,10 @@ function readConfig(empresa: Empresa, prefix: string): PostgresConnectionConfig 
  * configuradas em .env.local — os módulos que dependem dela devem tratar
  * esse caso (dado ainda não disponível, ver README).
  *
- * PENDENTE: o host configurado até agora (127.0.0.1) só funciona rodando
- * na própria máquina da loja — ainda falta um endereço alcançável de fora
- * (IP fixo, VPN, etc) pra essa sessão remota conseguir conectar de verdade.
+ * Em produção este app roda dentro da própria loja, na mesma rede local do
+ * Postgres — então o HOST aqui deve ser o IP local desse servidor (ex:
+ * 192.168.x.x), nunca `127.0.0.1` (que só funciona rodando na própria
+ * máquina do Postgres) nem exposto à internet.
  */
 export function getPostgresConfig(empresa: Empresa): PostgresConnectionConfig | null {
   const prefixes: Record<Empresa, string> = {

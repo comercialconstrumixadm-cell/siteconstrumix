@@ -83,27 +83,39 @@ para as queries reais escritas a partir disso.
 - **Queries reais de faturamento de pedidos, vendas de cimento e catálogo**
   (`lib/postgres/`), escritas a partir do schema real do Postgres do Zeus.
 
+## Sobre acesso ao Postgres do Zeus
+
+Este app **roda dentro da própria loja**, num computador da rede local —
+não precisa (e não deve) expor o Postgres do Zeus à internet. Em produção
+o `HOST` em `.env.local` é o IP local do servidor Postgres (ex:
+`192.168.x.x`), na mesma rede.
+
+O único lugar onde "acesso de fora" importava era esta sessão de
+desenvolvimento (rodando na nuvem) tentando validar as queries contra
+dados reais — e isso já foi resolvido sem expor nada: alguém com acesso
+físico/local roda a consulta no pgAdmin e cola o resultado aqui. Esse
+caminho continua valendo pra validar os números antes de confiar neles.
+
 ## O que está deliberadamente pendente
 
-1. **Acesso de rede ao Postgres do Zeus.** O host confirmado até agora
-   (`127.0.0.1`) só funciona rodando na própria máquina da loja — falta um
-   endereço alcançável de fora dela (IP fixo, VPN etc) pra uma sessão
-   remota conseguir conectar de verdade. Preencher `.env.local` (ver
-   `.env.example`) assim que isso existir.
-2. **Validar os números contra a planilha de referência (META_2026).** As
+1. **Validar os números contra a planilha de referência (META_2026).** As
    queries de faturamento de pedidos e vendas de cimento ainda não
    excluem cancelamentos/devoluções (tabelas `prevendas_cancelamento` e
    `prevendas_devolucoes_*`, vistas no schema mas não inspecionadas) — e
    achamos pelo menos um produto de cimento fora do padrão de NCM
    ("CIMENTO BRANCO 1KG"). Comparar com números reais antes de confiar.
-3. **Modelo visual do PDF de orçamento já usado na Construmix** —
+2. **Modelo visual do PDF de orçamento já usado na Construmix** —
    `lib/pdf.ts` gera um layout funcional simples que precisa ser
    substituído pelo modelo real (cores, logo, cabeçalho/rodapé) quando o
    Marcos compartilhar o exemplo.
-4. **Comparativos entre empresas** (`/gestao/comparativos`) — dependem do
-   item 1 (acesso de rede); hoje é uma tela explicando o bloqueio. O
-   padrão de dashboard exportável (gráfico + tabela + PNG) já existe em
-   `/gestao/bonificacao/BonusCharts.tsx` e pode ser reaproveitado aqui.
+3. **Comparativos entre empresas** (`/gestao/comparativos`) — hoje é uma
+   tela explicando o bloqueio, porque ainda não foi testado contra os 3
+   bancos reais (ver item 1). O padrão de dashboard exportável (gráfico +
+   tabela + PNG) já existe em `/gestao/bonificacao/BonusCharts.tsx` e pode
+   ser reaproveitado aqui.
+4. **IP local do servidor Postgres na rede da loja**, pra preencher
+   `POSTGRES_*_HOST` em `.env.local` quando o app for instalado de verdade
+   num computador da loja (ver seção acima).
 
 ## Arquitetura
 
@@ -131,12 +143,14 @@ internal-app/
 
 ## Próximos passos (ordem sugerida)
 
-1. Resolver o acesso de rede ao Postgres (item 1 acima) — sem isso nada
-   mais aqui pode ser testado contra dados reais.
-2. Rodar `lib/postgres/construmixFaturamento.ts` e `cimentoFilter.ts`
-   contra o banco real e validar o ABATIMENTO calculado contra a planilha
-   META_2026 — ajustar a exclusão de cancelamentos/devoluções se precisar.
-3. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
+1. Rodar `lib/postgres/construmixFaturamento.ts` e `cimentoFilter.ts`
+   contra o banco real (via pgAdmin, colando resultado nesta conversa, ou
+   já instalando o app na loja) e validar o ABATIMENTO calculado contra a
+   planilha META_2026 — ajustar a exclusão de cancelamentos/devoluções se
+   precisar.
+2. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
    periódica do catálogo (6.000+ produtos).
-4. Substituir o layout de `lib/pdf.ts` pelo modelo real da Construmix.
-5. Implementar `/gestao/comparativos` com os 3 bancos conectados.
+3. Substituir o layout de `lib/pdf.ts` pelo modelo real da Construmix.
+4. Implementar `/gestao/comparativos` com os 3 bancos conectados.
+5. Instalar o app num computador da loja com acesso à rede local do
+   Postgres, e preencher `.env.local` com o IP local real.

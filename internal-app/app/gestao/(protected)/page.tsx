@@ -10,7 +10,7 @@ export default function PainelPage() {
       <h1 style={{ marginBottom: 4 }}>Painel</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24 }}>
         Visão geral. Comparativos entre empresas e dashboards visuais exportáveis (PDF/imagem)
-        entram aqui assim que os 3 bancos PostgreSQL do Zeus estiverem alcançáveis por rede.
+        entram aqui assim que os 3 bancos PostgreSQL do Zeus estiverem ligados e validados.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>

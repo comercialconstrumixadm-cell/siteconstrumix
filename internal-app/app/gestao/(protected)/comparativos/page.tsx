@@ -7,12 +7,12 @@ export default function ComparativosPage() {
       </p>
       <div className="card">
         <p>
-          Bloqueado até as 3 conexões PostgreSQL (uma por empresa) estarem alcançáveis por rede e
-          configuradas com credenciais reais — ver <code>.env.example</code> e{' '}
-          <code>lib/postgres/config.ts</code>. É um único servidor Postgres com um banco por
-          empresa (<code>base_construmix</code>, <code>base_samscomercio</code>,{' '}
-          <code>base_newhouse</code>); o app mantém 3 conexões separadas e agrega os dados nesta
-          camada.
+          Bloqueado até as 3 conexões PostgreSQL (uma por empresa) estarem configuradas com
+          credenciais reais e os números validados — ver <code>.env.example</code> e{' '}
+          <code>lib/postgres/config.ts</code>. É um único servidor Postgres, na rede local da
+          loja, com um banco por empresa (<code>base_construmix</code>,{' '}
+          <code>base_samscomercio</code>, <code>base_newhouse</code>); o app mantém 3 conexões
+          separadas e agrega os dados nesta camada.
         </p>
         <p style={{ marginTop: 12 }}>
           Quando os 3 bancos estiverem acessíveis, esta tela deve consultar faturamento por
