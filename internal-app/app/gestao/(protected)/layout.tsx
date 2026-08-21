@@ -27,6 +27,7 @@ export default async function GestaoLayout({ children }: { children: React.React
         <Link href="/gestao/faturamento" style={navLinkStyle}>Faturamento</Link>
         <Link href="/gestao/vendedores" style={navLinkStyle}>Vendedores ativos</Link>
         <Link href="/gestao/bonificacao" style={navLinkStyle}>Bonificação</Link>
+        <Link href="/gestao/orcamentos" style={navLinkStyle}>Histórico de orçamentos</Link>
         <Link href="/gestao/comparativos" style={navLinkStyle}>Comparativos</Link>
         <form action="/api/auth/logout" method="post" style={{ marginTop: 'auto' }}>
           <button

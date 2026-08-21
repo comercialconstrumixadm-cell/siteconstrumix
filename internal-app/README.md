@@ -40,8 +40,15 @@ npm test
   vendedores ativos e histórico de bonificação calculada.
 - **Módulo Orçamento** ponta a ponta com dados de amostra: busca de
   produtos (full-text + dicionário de sinônimos), montagem do orçamento e
-  geração de PDF.
-- **Login do módulo Gestão** (senha + cookie de sessão assinado).
+  geração de PDF (com paginação real para orçamentos longos).
+- **Login do módulo Gestão** (senha + cookie de sessão assinado), isolado
+  num grupo de rotas `(protected)` para o layout autenticado nunca embrulhar
+  a própria página de login.
+- **Dashboard visual da bonificação** (`/gestao/bonificacao`): gráficos de
+  Abatimento x Meta e de Bônus total por mês, com tooltip, legenda, tabela
+  completa como alternativa acessível, e exportação para PNG — a base para
+  o requisito de "dashboards prontos para apresentação".
+- **Histórico de orçamentos** (`/gestao/orcamentos`), visível para gestão.
 
 ## O que está deliberadamente pendente (precisa de informação/acesso que só o Marcos tem)
 
@@ -68,15 +75,22 @@ orçamentos incorretos:
    gera um layout funcional simples que precisa ser substituído pelo
    modelo real (cores, logo, cabeçalho/rodapé) quando o Marcos compartilhar
    o exemplo.
-6. **Comparativos entre empresas e dashboards exportáveis** (`/gestao/comparativos`)
-   — dependem dos 3 bancos conectados; hoje é uma tela explicando o bloqueio.
+6. **Comparativos entre empresas** (`/gestao/comparativos`) — dependem dos
+   3 bancos conectados; hoje é uma tela explicando o bloqueio. O padrão de
+   dashboard exportável (gráfico + tabela + PNG) já existe em
+   `/gestao/bonificacao/BonusCharts.tsx` e pode ser reaproveitado aqui.
 
 ## Arquitetura
 
 ```
 internal-app/
   app/
-    gestao/          módulo protegido (layout valida sessão + middleware.ts)
+    gestao/
+      login/            página de login (fora do grupo protegido)
+      (protected)/       tudo que exige sessão: layout.tsx valida + nav;
+                          painel, faturamento, vendedores, bonificação
+                          (com BonusCharts.tsx), histórico de orçamentos,
+                          comparativos
     orcamento/        módulo aberto (busca produtos, monta orçamento, gera PDF)
     api/               route handlers (auth, produtos/search, orcamento, bonificacao/calcular)
   lib/

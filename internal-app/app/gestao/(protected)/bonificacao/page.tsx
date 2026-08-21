@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import BonusCharts from './BonusCharts';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -57,6 +58,8 @@ export default function BonificacaoPage() {
           {carregando ? 'Calculando…' : 'Recalcular'}
         </button>
       </div>
+
+      <BonusCharts dados={resultado} />
 
       <div className="card">
         <table>
