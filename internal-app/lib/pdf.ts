@@ -132,11 +132,9 @@ export async function gerarPdfOrcamento(dados: DadosPdfOrcamento): Promise<Uint8
       page.drawLine({ start: { x: MARGIN, y }, end: { x: PAGE_WIDTH - MARGIN, y }, thickness: 1, color: CINZA_ESCURO });
       y -= 16;
 
-      if (dados.clienteNome) {
-        page.drawText('Cliente: ', { x: MARGIN, y, size: 9, font: fontBold, color: CINZA_ESCURO });
-        page.drawText(dados.clienteNome, { x: MARGIN + 40, y, size: 9, font, color: CINZA_ESCURO });
-        y -= 13;
-      }
+      page.drawText('Cliente: ', { x: MARGIN, y, size: 9, font: fontBold, color: CINZA_ESCURO });
+      page.drawText(dados.clienteNome || 'Ao consumidor', { x: MARGIN + 40, y, size: 9, font, color: CINZA_ESCURO });
+      y -= 13;
       if (dados.clienteEndereco) {
         page.drawText('Endereço: ', { x: MARGIN, y, size: 9, font: fontBold, color: CINZA_ESCURO });
         page.drawText(dados.clienteEndereco.slice(0, 90), { x: MARGIN + 46, y, size: 9, font, color: CINZA_ESCURO });

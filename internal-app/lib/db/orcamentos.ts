@@ -53,10 +53,37 @@ const SELECT_ORCAMENTO = `
   FROM orcamentos
 `;
 
-export function listOrcamentos(limite = 50) {
+export interface FiltroOrcamentos {
+  clienteNome?: string;
+  dataInicio?: string; // 'YYYY-MM-DD'
+  dataFim?: string; // 'YYYY-MM-DD'
+  limite?: number;
+}
+
+export function listOrcamentos(filtro: FiltroOrcamentos = {}) {
+  const { clienteNome, dataInicio, dataFim, limite = 100 } = filtro;
+
+  const condicoes: string[] = [];
+  const params: Record<string, unknown> = { limite };
+
+  if (clienteNome) {
+    condicoes.push('cliente_nome LIKE @clienteNome COLLATE NOCASE');
+    params.clienteNome = `%${clienteNome}%`;
+  }
+  if (dataInicio) {
+    condicoes.push('date(criado_em) >= date(@dataInicio)');
+    params.dataInicio = dataInicio;
+  }
+  if (dataFim) {
+    condicoes.push('date(criado_em) <= date(@dataFim)');
+    params.dataFim = dataFim;
+  }
+
+  const where = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : '';
+
   return getDb()
-    .prepare(`${SELECT_ORCAMENTO} ORDER BY id DESC LIMIT @limite`)
-    .all({ limite });
+    .prepare(`${SELECT_ORCAMENTO} ${where} ORDER BY id DESC LIMIT @limite`)
+    .all(params);
 }
 
 export function getOrcamento(id: number) {
