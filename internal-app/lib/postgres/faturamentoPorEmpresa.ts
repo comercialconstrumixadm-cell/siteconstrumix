@@ -9,16 +9,30 @@ import type { Empresa } from './config';
  * `prevendas` + `prevendas_faturamento` é o jeito certo, diferente do
  * faturamento por nota fiscal).
  *
- * PENDENTE: assume que SAMS e New House têm o mesmo desenho de tabelas
- * que a Construmix (mesmo produto Zeus) — ainda não inspecionamos o
- * schema delas diretamente pra confirmar 1:1. Se os nomes de
- * tabela/coluna divergirem, ajustar aqui.
+ * Sem o filtro de forma de pagamento, essa consulta somava TUDO que tem
+ * registro em prevendas_faturamento no mês — validado contra o relatório
+ * "Faturamento de Vendas" (Pré-vendas) do Zeus pra julho/2026: sem filtro
+ * deu R$ 1.126.434,74 (2045 pré-vendas) contra R$ 263.830,32 no relatório
+ * real (4,3x errado). Com o filtro de forma de pagamento abaixo (o mesmo
+ * usado no relatório do Zeus) deu R$ 268.448,05 (1683) — ~1,7% acima do
+ * relatório, resíduo provavelmente de itens que não são "Mercadoria para
+ * Revenda" dentro de pré-vendas mistas (ainda não filtrado aqui).
+ *
+ * PENDENTE:
+ * - assume que SAMS e New House têm o mesmo desenho de tabelas E os
+ *   mesmos códigos de forma de pagamento que a Construmix — só validado
+ *   na Construmix até agora.
+ * - resíduo de ~1,7% não investigado (provável filtro por tipo de item
+ *   faltando, precisaria de prevendasprod).
  */
+const FORMAS_PAGAMENTO_VALIDAS = [1, 7, 8, 9, 19, 20, 21, 22, 23, 26, 29, 31, 32, 33, 36, 39];
+
 const FATURAMENTO_PEDIDOS_QUERY = `
   SELECT COALESCE(SUM(pv.valortotal), 0) AS total, COUNT(*) AS quantidade
   FROM prevendas pv
   JOIN prevendas_faturamento pf ON pf.codprevenda = pv.codigo
   WHERE pf.datahora >= $1 AND pf.datahora < $2
+    AND pv.codpagamento = ANY($3::int[])
 `;
 
 export interface FaturamentoDetalhado {
@@ -32,7 +46,11 @@ export async function getFaturamentoDetalhadoMensalPorEmpresa(
   month: number
 ): Promise<FaturamentoDetalhado> {
   const { inicio, fim } = monthRange(year, month);
-  const rows = await queryZeus<{ total: string; quantidade: string }>(empresa, FATURAMENTO_PEDIDOS_QUERY, [inicio, fim]);
+  const rows = await queryZeus<{ total: string; quantidade: string }>(empresa, FATURAMENTO_PEDIDOS_QUERY, [
+    inicio,
+    fim,
+    FORMAS_PAGAMENTO_VALIDAS,
+  ]);
   return {
     faturamento: Number(rows[0]?.total ?? 0),
     quantidadeVendas: Number(rows[0]?.quantidade ?? 0),

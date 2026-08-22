@@ -22,12 +22,18 @@ export interface FaturamentoMensal {
  * também usada pelos comparativos entre empresas); este módulo só fixa a
  * empresa em "construmix", que é a única usada na bonificação.
  *
- * PENDENTE — validar com o Marcos antes de confiar nos números:
+ * Validado contra o relatório "Faturamento de Vendas" (Pré-vendas) do
+ * Zeus em 2026-08 (ver faturamentoPorEmpresa.ts para o histórico completo
+ * da validação): com o filtro de forma de pagamento certo, fica ~1,7%
+ * acima do relatório real.
+ *
+ * PENDENTE — validar com o Marcos antes de confiar cegamente nos números:
  * cancelamentos e devoluções (tabelas `prevendas_cancelamento` e
  * `prevendas_devolucoes_*`, vistas no schema mas ainda não inspecionadas)
- * provavelmente precisam ser excluídos daqui. Comparar o resultado desta
- * query contra a planilha de referência (META_2026) antes de usar em
- * produção — ver checklist da especificação.
+ * provavelmente precisam ser excluídos daqui, e o resíduo de ~1,7% ainda
+ * não foi investigado (provável filtro por tipo de item faltando).
+ * Comparar o resultado desta query contra a planilha de referência
+ * (META_2026) antes de usar em produção — ver checklist da especificação.
  */
 export async function getFaturamentoPedidosMensal(year: number, month: number): Promise<number> {
   return getFaturamentoMensalPorEmpresa('construmix', year, month);
