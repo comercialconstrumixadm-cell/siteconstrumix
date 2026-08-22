@@ -15,16 +15,32 @@ import type { Empresa } from './config';
  * tabela/coluna divergirem, ajustar aqui.
  */
 const FATURAMENTO_PEDIDOS_QUERY = `
-  SELECT COALESCE(SUM(pv.valortotal), 0) AS total
+  SELECT COALESCE(SUM(pv.valortotal), 0) AS total, COUNT(*) AS quantidade
   FROM prevendas pv
   JOIN prevendas_faturamento pf ON pf.codprevenda = pv.codigo
   WHERE pf.datahora >= $1 AND pf.datahora < $2
 `;
 
-export async function getFaturamentoMensalPorEmpresa(empresa: Empresa, year: number, month: number): Promise<number> {
+export interface FaturamentoDetalhado {
+  faturamento: number;
+  quantidadeVendas: number;
+}
+
+export async function getFaturamentoDetalhadoMensalPorEmpresa(
+  empresa: Empresa,
+  year: number,
+  month: number
+): Promise<FaturamentoDetalhado> {
   const { inicio, fim } = monthRange(year, month);
-  const rows = await queryZeus<{ total: string }>(empresa, FATURAMENTO_PEDIDOS_QUERY, [inicio, fim]);
-  return Number(rows[0]?.total ?? 0);
+  const rows = await queryZeus<{ total: string; quantidade: string }>(empresa, FATURAMENTO_PEDIDOS_QUERY, [inicio, fim]);
+  return {
+    faturamento: Number(rows[0]?.total ?? 0),
+    quantidadeVendas: Number(rows[0]?.quantidade ?? 0),
+  };
+}
+
+export async function getFaturamentoMensalPorEmpresa(empresa: Empresa, year: number, month: number): Promise<number> {
+  return (await getFaturamentoDetalhadoMensalPorEmpresa(empresa, year, month)).faturamento;
 }
 
 export interface FaturamentoMensalEmpresa {
