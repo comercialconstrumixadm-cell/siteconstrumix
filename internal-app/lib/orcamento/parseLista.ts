@@ -4,7 +4,7 @@ export interface LinhaParseada {
   quantidade: number;
 }
 
-const RE_QTD_INICIO = /^(\d+(?:[.,]\d+)?)\s*[xX]?\s+(.+)$/;
+const RE_QTD_INICIO = /^(\d+(?:[.,]\d+)?)(?:\s*[xX]\s*|\s+)(.+)$/;
 const RE_QTD_FIM = /^(.+?)\s*[xX]\s*(\d+(?:[.,]\d+)?)$/;
 const RE_QTD_FIM_TRACO = /^(.+?)\s*[-–]\s*(\d+(?:[.,]\d+)?)$/;
 
