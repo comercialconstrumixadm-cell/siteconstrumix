@@ -1,4 +1,6 @@
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { ItemOrcamento } from './db/orcamentos';
 
 /**
@@ -18,9 +20,28 @@ const LOJA = {
   telefone: '(79)3304-4798',
 };
 
-/** Ícone de casa usado no site institucional (components/BrandLogo.tsx), desenhado como SVG path. */
-const LOGO_PATH_TELHADO = 'M4 14L16 5l12 9v13H4z';
-const LOGO_PATH_JANELAS = 'M11 27V18h4v9M19 27V21h4v6';
+/**
+ * Ícone oficial da Construmix (casa azul + janela verde), extraído do
+ * arquivo enviado pelo Marcos (um PDF com a logo completa) e recortado
+ * só na parte do ícone — o texto "COMERCIAL CONSTRUMIX" do orçamento real
+ * é desenhado como texto normal aqui embaixo, não como imagem, pra ficar
+ * compacto igual ao cabeçalho do modelo real (que não usa a logo cheia
+ * com a tagline, só o nome da loja). Fundo removido (era um JPEG com
+ * fundo cinza claro quase branco) pra não aparecer uma caixinha cinza no
+ * cabeçalho.
+ */
+const LOGO_ICONE_PATH = path.join('assets', 'logo-icone-construmix.png');
+const LOGO_ASPECT_RATIO = 318 / 253; // largura/altura do recorte
+const AZUL_LOGO = rgb(0.12, 0.44, 0.72);
+const VERDE_LOGO = rgb(0.18, 0.66, 0.31);
+
+let logoBytesCache: Buffer | null = null;
+function getLogoBytes(): Buffer {
+  if (!logoBytesCache) {
+    logoBytesCache = fs.readFileSync(path.join(process.cwd(), LOGO_ICONE_PATH));
+  }
+  return logoBytesCache;
+}
 
 export interface DadosPdfOrcamento {
   id: number;
@@ -55,6 +76,7 @@ export async function gerarPdfOrcamento(dados: DadosPdfOrcamento): Promise<Uint8
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const logoImage = await pdfDoc.embedPng(getLogoBytes());
 
   let page!: PDFPage;
   let y = 0;
@@ -86,13 +108,15 @@ export async function gerarPdfOrcamento(dados: DadosPdfOrcamento): Promise<Uint8
     y = PAGE_HEIGHT - MARGIN;
 
     if (paginaNumero === 1) {
-      // Logo (mesmo ícone de casa do site institucional), centralizado
-      // verticalmente com o texto ao lado (drawSvgPath ancora no canto
-      // inferior esquerdo da caixa delimitadora do path, tipo drawImage).
-      page.drawSvgPath(LOGO_PATH_TELHADO, { x: MARGIN, y: y - 21.5, scale: 1, borderColor: VERDE, borderWidth: 1.6 });
-      page.drawSvgPath(LOGO_PATH_JANELAS, { x: MARGIN, y: y - 21.5, scale: 1, borderColor: VERDE, borderWidth: 1.6 });
-      page.drawText('COMERCIAL', { x: MARGIN + 34, y: y - 6, size: 8, font, color: VERDE });
-      page.drawText('CONSTRUMIX', { x: MARGIN + 34, y: y - 18, size: 13, font: fontBold, color: VERDE });
+      // Logo: ícone oficial (imagem real) + nome da loja como texto,
+      // centralizados verticalmente um ao lado do outro.
+      const logoHeight = 34;
+      const logoWidth = logoHeight * LOGO_ASPECT_RATIO;
+      page.drawImage(logoImage, { x: MARGIN, y: y - logoHeight, width: logoWidth, height: logoHeight });
+
+      const textoX = MARGIN + logoWidth + 10;
+      page.drawText('COMERCIAL', { x: textoX, y: y - 6, size: 8, font, color: VERDE_LOGO });
+      page.drawText('CONSTRUMIX', { x: textoX, y: y - 18, size: 13, font: fontBold, color: AZUL_LOGO });
 
       centerText(`Orçamento - ${dados.id}`, y - 8, 19, fontBold, CINZA_ESCURO);
 

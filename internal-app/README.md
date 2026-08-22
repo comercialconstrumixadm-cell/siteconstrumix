@@ -71,9 +71,11 @@ para as queries reais escritas a partir disso.
   vendedores ativos e histórico de bonificação calculada.
 - **Módulo Orçamento** ponta a ponta com dados de amostra: busca de
   produtos (full-text + dicionário de sinônimos), montagem do orçamento e
-  geração de PDF replicando o modelo real usado na Construmix (logo, dados
-  do cliente, tabela de itens, desconto, forma de pagamento, assinatura,
-  rodapé — com paginação real para orçamentos longos).
+  geração de PDF replicando o modelo real usado na Construmix — logo
+  oficial de verdade (`assets/logo-icone-construmix.png`, extraída do
+  arquivo enviado pelo Marcos e embutida via `pdfDoc.embedPng`), dados do
+  cliente, tabela de itens, desconto, forma de pagamento, assinatura,
+  rodapé — com paginação real para orçamentos longos.
 - **Login do módulo Gestão** (senha + cookie de sessão assinado), isolado
   num grupo de rotas `(protected)` para o layout autenticado nunca embrulhar
   a própria página de login.
@@ -112,22 +114,14 @@ caminho continua valendo pra validar os números antes de confiar neles.
    `prevendas_devolucoes_*`, vistas no schema mas não inspecionadas) — e
    achamos pelo menos um produto de cimento fora do padrão de NCM
    ("CIMENTO BRANCO 1KG"). Comparar com números reais antes de confiar.
-2. **Logo oficial da Construmix em arquivo.** `lib/pdf.ts` já replica o
-   layout do orçamento real (compartilhado pelo Marcos), mas a logo usada
-   é o ícone simples de casa do site institucional (`components/BrandLogo.tsx`,
-   desenhado como vetor) — a logo oficial (com gradiente azul/verde e a
-   tagline "O seu Mix da Construção!") ainda não chegou como arquivo (só
-   apareceu colada na conversa, sem virar um arquivo de verdade). Quando
-   vier como anexo de fato, trocar o desenho vetorial por
-   `pdfDoc.embedPng()`/`embedJpg()` em `lib/pdf.ts`.
-3. **Testar `/gestao/comparativos` contra os 3 bancos reais** — a busca, o
+2. **Testar `/gestao/comparativos` contra os 3 bancos reais** — a busca, o
    gráfico e a tabela já estão implementados
    (`lib/postgres/faturamentoPorEmpresa.ts`) e tratam graciosamente cada
    empresa sem conexão configurada, mas ainda não foram validados com
    dados de verdade. A query assume que SAMS e New House têm o mesmo
    desenho de tabelas da Construmix (mesmo produto Zeus) — ainda não
    confirmado inspecionando o schema delas diretamente.
-4. **IP local do servidor Postgres na rede da loja**, pra preencher
+3. **IP local do servidor Postgres na rede da loja**, pra preencher
    `POSTGRES_*_HOST` em `.env.local` quando o app for instalado de verdade
    num computador da loja (ver seção acima).
 
@@ -168,9 +162,7 @@ internal-app/
    precisar.
 2. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
    periódica do catálogo (6.000+ produtos).
-3. Conseguir a logo oficial da Construmix como arquivo (não colada no
-   chat) e trocar o desenho vetorial em `lib/pdf.ts` por `embedPng`.
-4. Testar `/gestao/comparativos` contra os 3 bancos reais e confirmar que
+3. Testar `/gestao/comparativos` contra os 3 bancos reais e confirmar que
    o schema de SAMS/New House bate com o da Construmix.
-5. Instalar o app num computador da loja com acesso à rede local do
+4. Instalar o app num computador da loja com acesso à rede local do
    Postgres, e preencher `.env.local` com o IP local real.
