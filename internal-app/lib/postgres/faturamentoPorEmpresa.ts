@@ -48,18 +48,16 @@ export async function getFaturamentoComparativo(
   empresas: Empresa[],
   meses: { year: number; month: number }[]
 ): Promise<FaturamentoMensalEmpresa[]> {
-  const resultados: FaturamentoMensalEmpresa[] = [];
+  const combinacoes = empresas.flatMap((empresa) => meses.map((mes) => ({ empresa, ...mes })));
 
-  for (const empresa of empresas) {
-    for (const { year, month } of meses) {
+  return Promise.all(
+    combinacoes.map(async ({ empresa, year, month }): Promise<FaturamentoMensalEmpresa> => {
       try {
         const faturamento = await getFaturamentoMensalPorEmpresa(empresa, year, month);
-        resultados.push({ empresa, year, month, faturamento });
+        return { empresa, year, month, faturamento };
       } catch (error) {
-        resultados.push({ empresa, year, month, erro: (error as Error).message });
+        return { empresa, year, month, erro: (error as Error).message };
       }
-    }
-  }
-
-  return resultados;
+    })
+  );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import ChartTooltip from '@/components/ChartTooltip';
+import { CHART_COLORS, exportChartsAsPng, legendDot, niceMax, type TooltipState } from '@/lib/chartUtils';
 
 interface BonusMensal {
   year: number;
@@ -12,26 +14,11 @@ interface BonusMensal {
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-/**
- * Paleta fixa em hex puro (sem CSS custom properties). Duas razões:
- * 1. O resto do app ainda não tem tema escuro (globals.css é só claro), e
- *    "seguir" o dark mode do sistema apenas neste componente deixaria o
- *    texto claro sobre o fundo branco do .card — pior contraste, não
- *    melhor (confirmado visualmente antes desta versão).
- * 2. `var(--x)` dentro de um <svg> não resolve quando o SVG é serializado
- *    sozinho (fora do DOM) para exportar como PNG — os elementos caem no
- *    valor inicial do SVG (fill preto, stroke nenhum), perdendo toda cor.
- *    Hex direto evita os dois problemas de uma vez.
- */
-const COLORS = {
-  grid: '#e3e8e1',
-  textSecondary: '#667169',
-  series1: '#2a78d6', // Abatimento realizado
-  series2: '#eb6834', // Bônus total
-  series3: '#1baf7a', // Meta vigente
-  surface: '#ffffff',
-  tooltipBg: '#17241a',
-  tooltipText: '#ffffff',
+/** Cores de série específicas deste dashboard (ver CHART_COLORS pras cores base compartilhadas). */
+const SERIES = {
+  abatimento: '#2a78d6',
+  meta: '#1baf7a',
+  bonus: '#eb6834',
 };
 
 const brl = (n: number) =>
@@ -41,44 +28,6 @@ const brlCompacto = (n: number) => {
   if (n >= 1000) return `R$ ${(n / 1000).toFixed(0)}k`;
   return `R$ ${n.toFixed(0)}`;
 };
-
-interface TooltipState {
-  x: number;
-  y: number;
-  linhas: string[];
-}
-
-function niceMax(max: number): number {
-  if (max <= 0) return 100;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
-  const normalizado = max / magnitude;
-  const passo = normalizado <= 1 ? 1 : normalizado <= 2 ? 2 : normalizado <= 5 ? 5 : 10;
-  return passo * magnitude;
-}
-
-function Tooltip({ tooltip }: { tooltip: TooltipState }) {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: tooltip.x + 12,
-        top: tooltip.y - 8,
-        background: COLORS.tooltipBg,
-        color: COLORS.tooltipText,
-        padding: '6px 10px',
-        borderRadius: 6,
-        fontSize: 12,
-        pointerEvents: 'none',
-        whiteSpace: 'nowrap',
-        boxShadow: '0 2px 8px rgba(0,0,0,.2)',
-      }}
-    >
-      {tooltip.linhas.map((l, i) => (
-        <div key={i} style={{ fontWeight: i === 0 ? 700 : 400 }}>{l}</div>
-      ))}
-    </div>
-  );
-}
 
 /**
  * Gráfico "Abatimento x Meta por mês" — comparação de magnitude na mesma
@@ -106,14 +55,14 @@ function ChartAbatimentoMeta({ dados }: { dados: BonusMensal[] }) {
   return (
     <div style={{ position: 'relative' }}>
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Abatimento realizado x meta vigente, por mês">
-        <rect x={0} y={0} width={width} height={height} fill={COLORS.surface} />
+        <rect x={0} y={0} width={width} height={height} fill={CHART_COLORS.surface} />
         <g transform={`translate(${margin.left},${margin.top})`}>
           {ticks.map((t) => {
             const ty = innerH - (t / maxValor) * innerH;
             return (
               <g key={t}>
-                <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={COLORS.grid} strokeWidth={1} />
-                <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={COLORS.textSecondary}>
+                <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={CHART_COLORS.grid} strokeWidth={1} />
+                <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                   {brlCompacto(t)}
                 </text>
               </g>
@@ -148,7 +97,7 @@ function ChartAbatimentoMeta({ dados }: { dados: BonusMensal[] }) {
                   width={barW}
                   height={Math.max(0, abatimentoH)}
                   rx={4}
-                  fill={COLORS.series1}
+                  fill={SERIES.abatimento}
                 />
                 {d.meta !== null && (
                   <rect
@@ -157,26 +106,26 @@ function ChartAbatimentoMeta({ dados }: { dados: BonusMensal[] }) {
                     width={barW}
                     height={Math.max(0, metaH)}
                     rx={4}
-                    fill={COLORS.series3}
+                    fill={SERIES.meta}
                   />
                 )}
-                <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={COLORS.textSecondary}>
+                <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                   {MESES_ABREV[d.month - 1]}/{String(d.year).slice(-2)}
                 </text>
               </g>
             );
           })}
 
-          <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={COLORS.grid} strokeWidth={1} />
+          <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={CHART_COLORS.grid} strokeWidth={1} />
         </g>
       </svg>
 
-      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>
-        <span><i style={legendDot(COLORS.series1)} /> Abatimento realizado</span>
-        <span><i style={legendDot(COLORS.series3)} /> Meta vigente</span>
+      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: CHART_COLORS.textSecondary, marginTop: 4 }}>
+        <span><i style={legendDot(SERIES.abatimento)} /> Abatimento realizado</span>
+        <span><i style={legendDot(SERIES.meta)} /> Meta vigente</span>
       </div>
 
-      {tooltip && <Tooltip tooltip={tooltip} />}
+      {tooltip && <ChartTooltip tooltip={tooltip} />}
     </div>
   );
 }
@@ -201,14 +150,14 @@ function ChartBonusTotal({ dados }: { dados: BonusMensal[] }) {
   return (
     <div style={{ position: 'relative' }}>
       <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Valor total do bônus, por mês">
-        <rect x={0} y={0} width={width} height={height} fill={COLORS.surface} />
+        <rect x={0} y={0} width={width} height={height} fill={CHART_COLORS.surface} />
         <g transform={`translate(${margin.left},${margin.top})`}>
           {ticks.map((t) => {
             const ty = innerH - (t / maxValor) * innerH;
             return (
               <g key={t}>
-                <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={COLORS.grid} strokeWidth={1} />
-                <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={COLORS.textSecondary}>
+                <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={CHART_COLORS.grid} strokeWidth={1} />
+                <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                   {brlCompacto(t)}
                 </text>
               </g>
@@ -230,80 +179,26 @@ function ChartBonusTotal({ dados }: { dados: BonusMensal[] }) {
             return (
               <g key={`${d.year}-${d.month}`} onMouseMove={onHover} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'pointer' }}>
                 <rect x={gx} y={0} width={grupoW} height={innerH} fill="transparent" />
-                <rect x={cx - barW / 2} y={innerH - barH} width={barW} height={Math.max(0, barH)} rx={4} fill={COLORS.series2} />
+                <rect x={cx - barW / 2} y={innerH - barH} width={barW} height={Math.max(0, barH)} rx={4} fill={SERIES.bonus} />
                 {d.valorTotalBonus > 0 && (
-                  <text x={cx} y={innerH - barH - 6} textAnchor="middle" fontSize={9} fill={COLORS.textSecondary}>
+                  <text x={cx} y={innerH - barH - 6} textAnchor="middle" fontSize={9} fill={CHART_COLORS.textSecondary}>
                     {brlCompacto(d.valorTotalBonus)}
                   </text>
                 )}
-                <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={COLORS.textSecondary}>
+                <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                   {MESES_ABREV[d.month - 1]}/{String(d.year).slice(-2)}
                 </text>
               </g>
             );
           })}
 
-          <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={COLORS.grid} strokeWidth={1} />
+          <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={CHART_COLORS.grid} strokeWidth={1} />
         </g>
       </svg>
 
-      {tooltip && <Tooltip tooltip={tooltip} />}
+      {tooltip && <ChartTooltip tooltip={tooltip} />}
     </div>
   );
-}
-
-function legendDot(color: string): React.CSSProperties {
-  return {
-    display: 'inline-block',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    background: color,
-    marginRight: 6,
-  };
-}
-
-async function exportarComoPng(containerId: string, nomeArquivo: string) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const svgs = Array.from(container.querySelectorAll('svg'));
-  if (svgs.length === 0) return;
-
-  const escala = 2;
-  const canvas = document.createElement('canvas');
-  const totalHeight = svgs.reduce((sum, svg) => sum + svg.viewBox.baseVal.height, 0) + 40;
-  const width = svgs[0].viewBox.baseVal.width;
-  canvas.width = width * escala;
-  canvas.height = totalHeight * escala;
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(escala, escala);
-  ctx.fillStyle = COLORS.surface;
-  ctx.fillRect(0, 0, width, totalHeight);
-
-  let offsetY = 8;
-  for (const svg of svgs) {
-    const svgString = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = url;
-    });
-    ctx.drawImage(img, 0, offsetY, svg.viewBox.baseVal.width, svg.viewBox.baseVal.height);
-    URL.revokeObjectURL(url);
-    offsetY += svg.viewBox.baseVal.height + 24;
-  }
-
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = nomeArquivo;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }, 'image/png');
 }
 
 export default function BonusCharts({ dados }: { dados: BonusMensal[] }) {
@@ -318,7 +213,7 @@ export default function BonusCharts({ dados }: { dados: BonusMensal[] }) {
     <div className="card" style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 style={{ fontSize: 15 }}>Dashboard — pronto para apresentação</h2>
-        <button className="btn btn-secondary" onClick={() => exportarComoPng('bonus-charts', 'bonificacao-construmix.png')}>
+        <button className="btn btn-secondary" onClick={() => exportChartsAsPng('bonus-charts', 'bonificacao-construmix.png')}>
           Baixar imagem (PNG)
         </button>
       </div>

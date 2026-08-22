@@ -213,7 +213,11 @@ export async function gerarPdfOrcamento(dados: DadosPdfOrcamento): Promise<Uint8
     y -= ALTURA_LINHA - 5;
   }
 
-  garantirEspaco(90);
+  // Reserva espaço pro bloco inteiro que vem a seguir sem outro
+  // garantirEspaco no meio: itens/quantidade (20) + subtotal (16) +
+  // desconto (16) + divisória (4) + total (20) + válido até (13) +
+  // previsão de entrega (24) + forma de pagamento (24) ≈ 137, com folga.
+  garantirEspaco(145);
   page.drawText(`Número de ítens: ${dados.itens.length}`, { x: MARGIN, y, size: 8, font: fontBold, color: CINZA_ESCURO });
   page.drawText(`Quantidade Total: ${quantidadeTotal}`, { x: MARGIN + 130, y, size: 8, font: fontBold, color: CINZA_ESCURO });
   y -= 20;

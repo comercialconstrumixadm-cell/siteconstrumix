@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { salvarOrcamento, getOrcamento, listOrcamentos, type NovoOrcamento } from '@/lib/db/orcamentos';
+import { salvarOrcamento, getOrcamento, type NovoOrcamento } from '@/lib/db/orcamentos';
 import { gerarPdfOrcamento } from '@/lib/pdf';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
-  return NextResponse.json({ orcamentos: listOrcamentos() });
-}
-
+/**
+ * Sem GET aqui de propósito: o histórico de orçamentos (com nome/telefone/
+ * endereço de cliente) só é exposto pela tela protegida /gestao/orcamentos,
+ * que lê listOrcamentos() direto no servidor — uma rota GET pública aqui
+ * vazaria esses dados sem exigir login.
+ */
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as NovoOrcamento;
 

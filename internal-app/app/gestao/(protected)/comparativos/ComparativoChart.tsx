@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import ChartTooltip from '@/components/ChartTooltip';
+import { CHART_COLORS, exportChartsAsPng, legendDot, niceMax, type TooltipState } from '@/lib/chartUtils';
 
 interface FaturamentoMensalEmpresa {
   empresa: 'construmix' | 'sams' | 'newhouse';
@@ -18,30 +20,8 @@ const EMPRESAS: { chave: FaturamentoMensalEmpresa['empresa']; nome: string; cor:
   { chave: 'newhouse', nome: 'New House', cor: '#1baf7a' },
 ];
 
-const COLORS = {
-  grid: '#e3e8e1',
-  textSecondary: '#667169',
-  surface: '#ffffff',
-  tooltipBg: '#17241a',
-  tooltipText: '#ffffff',
-};
-
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 const brlCompacto = (n: number) => (n >= 1000 ? `R$ ${(n / 1000).toFixed(0)}k` : `R$ ${n.toFixed(0)}`);
-
-function niceMax(max: number): number {
-  if (max <= 0) return 100;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
-  const normalizado = max / magnitude;
-  const passo = normalizado <= 1 ? 1 : normalizado <= 2 ? 2 : normalizado <= 5 ? 5 : 10;
-  return passo * magnitude;
-}
-
-interface TooltipState {
-  x: number;
-  y: number;
-  linhas: string[];
-}
 
 export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEmpresa[] }) {
   const meses = Array.from(new Set(dados.map((d) => `${d.year}-${d.month}`)))
@@ -78,39 +58,6 @@ export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEm
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  async function exportarPng() {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const svgString = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = url;
-    });
-    const canvas = document.createElement('canvas');
-    const escala = 2;
-    canvas.width = width * escala;
-    canvas.height = height * escala;
-    const ctx = canvas.getContext('2d')!;
-    ctx.scale(escala, escala);
-    ctx.fillStyle = COLORS.surface;
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0, width, height);
-    URL.revokeObjectURL(url);
-
-    canvas.toBlob((b) => {
-      if (!b) return;
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(b);
-      link.download = 'comparativo-empresas.png';
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }, 'image/png');
-  }
-
   if (empresasComDados.length === 0) {
     return null;
   }
@@ -119,19 +66,24 @@ export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEm
     <div className="card" style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 style={{ fontSize: 15 }}>Faturamento de pedidos por empresa, últimos meses</h2>
-        <button className="btn btn-secondary" onClick={exportarPng}>Baixar imagem (PNG)</button>
+        <button
+          className="btn btn-secondary"
+          onClick={() => exportChartsAsPng('comparativo-chart', 'comparativo-empresas.png')}
+        >
+          Baixar imagem (PNG)
+        </button>
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div id="comparativo-chart" style={{ position: 'relative' }}>
         <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Faturamento de pedidos por empresa e mês">
-          <rect x={0} y={0} width={width} height={height} fill={COLORS.surface} />
+          <rect x={0} y={0} width={width} height={height} fill={CHART_COLORS.surface} />
           <g transform={`translate(${margin.left},${margin.top})`}>
             {ticks.map((t) => {
               const ty = innerH - (t / maxValor) * innerH;
               return (
                 <g key={t}>
-                  <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={COLORS.grid} strokeWidth={1} />
-                  <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={COLORS.textSecondary}>
+                  <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={CHART_COLORS.grid} strokeWidth={1} />
+                  <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                     {brlCompacto(t)}
                   </text>
                 </g>
@@ -177,53 +129,31 @@ export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEm
                       />
                     );
                   })}
-                  <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={COLORS.textSecondary}>
+                  <text x={cx} y={innerH + 16} textAnchor="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
                     {MESES_ABREV[m.month - 1]}/{String(m.year).slice(-2)}
                   </text>
                 </g>
               );
             })}
 
-            <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={COLORS.grid} strokeWidth={1} />
+            <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={CHART_COLORS.grid} strokeWidth={1} />
           </g>
         </svg>
 
-        {tooltip && (
-          <div
-            style={{
-              position: 'absolute',
-              left: tooltip.x + 12,
-              top: tooltip.y - 8,
-              background: COLORS.tooltipBg,
-              color: COLORS.tooltipText,
-              padding: '6px 10px',
-              borderRadius: 6,
-              fontSize: 12,
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 8px rgba(0,0,0,.2)',
-            }}
-          >
-            {tooltip.linhas.map((l, i) => (
-              <div key={i} style={{ fontWeight: i === 0 ? 700 : 400 }}>{l}</div>
-            ))}
-          </div>
-        )}
+        {tooltip && <ChartTooltip tooltip={tooltip} />}
       </div>
 
-      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>
+      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: CHART_COLORS.textSecondary, marginTop: 4 }}>
         {empresasComDados.map((e) => (
           <span key={e.chave}>
-            <i
-              style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: e.cor, marginRight: 6 }}
-            />
+            <i style={legendDot(e.cor)} />
             {e.nome}
           </span>
         ))}
       </div>
 
       {empresasSemDados.length > 0 && (
-        <p style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 8 }}>
+        <p style={{ fontSize: 12, color: CHART_COLORS.textSecondary, marginTop: 8 }}>
           Sem dados ainda: {empresasSemDados.map((e) => e.nome).join(', ')} (conexão não configurada — ver{' '}
           <code>.env.example</code>).
         </p>

@@ -25,7 +25,10 @@ export function isValidSessionToken(token: string | undefined | null): boolean {
   if (!token) return false;
   const [issuedAt, signature] = token.split('.');
   if (!issuedAt || !signature) return false;
-  if (sign(issuedAt) !== signature) return false;
+
+  const expected = Buffer.from(sign(issuedAt));
+  const actual = Buffer.from(signature);
+  if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) return false;
 
   const ageMs = Date.now() - Number(issuedAt);
   const twelveHoursMs = 12 * 60 * 60 * 1000;
