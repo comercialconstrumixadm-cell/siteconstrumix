@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { setVendedoresAtivos } from '@/lib/db/vendedores';
+import { addVendedorNome, removeVendedorNome, setVendedorNomeAtivo } from '@/lib/db/vendedoresNomes';
 
 export async function salvarVendedoresAtivos(formData: FormData) {
   const year = Number(formData.get('year'));
@@ -10,5 +11,25 @@ export async function salvarVendedoresAtivos(formData: FormData) {
   const observacao = String(formData.get('observacao') ?? '');
 
   setVendedoresAtivos(year, month, vendedoresAtivos, observacao || undefined);
+  revalidatePath('/gestao/vendedores');
+}
+
+export async function adicionarVendedorNome(formData: FormData) {
+  const nome = String(formData.get('nome') ?? '').trim();
+  if (!nome) return;
+  addVendedorNome(nome);
+  revalidatePath('/gestao/vendedores');
+}
+
+export async function alternarVendedorNomeAtivo(formData: FormData) {
+  const id = Number(formData.get('id'));
+  const ativo = formData.get('ativo') === '1';
+  setVendedorNomeAtivo(id, ativo);
+  revalidatePath('/gestao/vendedores');
+}
+
+export async function apagarVendedorNome(formData: FormData) {
+  const id = Number(formData.get('id'));
+  removeVendedorNome(id);
   revalidatePath('/gestao/vendedores');
 }

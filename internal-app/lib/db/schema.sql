@@ -87,6 +87,17 @@ CREATE TABLE IF NOT EXISTS sinonimos (
   UNIQUE (termo, sinonimo)
 );
 
+-- Cadastro simples de nomes dos vendedores, pra emitir recibo de
+-- bonificação nominal (ver lib/recibo.ts). Não tem histórico por mês —
+-- é sempre "quem está ativo agora"; ao gerar recibos de um mês passado,
+-- confira se a lista bate com o número de vendedores lançado naquele mês.
+CREATE TABLE IF NOT EXISTS vendedores_nomes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  ativo INTEGER NOT NULL DEFAULT 1,
+  criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Histórico de orçamentos gerados no balcão.
 CREATE TABLE IF NOT EXISTS orcamentos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

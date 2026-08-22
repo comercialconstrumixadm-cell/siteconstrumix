@@ -1,5 +1,6 @@
 import { listVendedoresAtivos } from '@/lib/db/vendedores';
-import { salvarVendedoresAtivos } from './actions';
+import { listVendedoresNomes } from '@/lib/db/vendedoresNomes';
+import { adicionarVendedorNome, alternarVendedorNomeAtivo, apagarVendedorNome, salvarVendedoresAtivos } from './actions';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -8,6 +9,7 @@ const MESES = [
 
 export default function VendedoresPage() {
   const vendedores = listVendedoresAtivos();
+  const nomes = listVendedoresNomes();
   const anoAtual = new Date().getFullYear();
 
   return (
@@ -75,6 +77,65 @@ export default function VendedoresPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <h2 style={{ fontSize: 18, marginBottom: 8 }}>Nomes dos vendedores</h2>
+        <p style={{ color: 'var(--muted)', marginBottom: 16, maxWidth: 640 }}>
+          Usado só pra emitir os recibos de bonificação nominais em Bonificação — sempre reflete
+          &quot;quem está ativo agora&quot;, não tem histórico por mês. Confira se bate com o número
+          lançado acima antes de gerar recibos de um mês passado.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>
+          <form action={adicionarVendedorNome} className="card">
+            <div className="field">
+              <label>Nome</label>
+              <input name="nome" type="text" required />
+            </div>
+            <button type="submit" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
+              Adicionar
+            </button>
+          </form>
+
+          <div className="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Ativo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {nomes.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.nome}</td>
+                    <td>
+                      <form action={alternarVendedorNomeAtivo}>
+                        <input type="hidden" name="id" value={v.id} />
+                        <input type="hidden" name="ativo" value={v.ativo ? '0' : '1'} />
+                        <button type="submit" className="btn btn-secondary">
+                          {v.ativo ? 'Ativo' : 'Inativo'}
+                        </button>
+                      </form>
+                    </td>
+                    <td>
+                      <form action={apagarVendedorNome}>
+                        <input type="hidden" name="id" value={v.id} />
+                        <button type="submit" className="btn btn-secondary">Remover</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+                {nomes.length === 0 && (
+                  <tr>
+                    <td colSpan={3} style={{ color: 'var(--muted)' }}>Nenhum vendedor cadastrado ainda.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

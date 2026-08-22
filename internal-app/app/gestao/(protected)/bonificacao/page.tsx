@@ -8,6 +8,12 @@ const MESES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
+interface VendedorNome {
+  id: number;
+  nome: string;
+  ativo: boolean;
+}
+
 interface BonusMensal {
   year: number;
   month: number;
@@ -27,6 +33,8 @@ const pct = (n: number | null) => (n === null ? '—' : `${(n * 100).toFixed(1)}
 export default function BonificacaoPage() {
   const [resultado, setResultado] = useState<BonusMensal[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [nomes, setNomes] = useState<VendedorNome[]>([]);
+  const [gerandoRecibo, setGerandoRecibo] = useState<string | null>(null);
 
   async function calcular() {
     setCarregando(true);
@@ -39,9 +47,56 @@ export default function BonificacaoPage() {
     }
   }
 
+  async function carregarNomes() {
+    const res = await fetch('/api/vendedores/nomes');
+    const data = await res.json();
+    if (res.ok) setNomes(data.nomes);
+  }
+
   useEffect(() => {
     calcular();
+    carregarNomes();
   }, []);
+
+  async function gerarRecibos(r: BonusMensal) {
+    const ativos = nomes.filter((n) => n.ativo);
+    if (ativos.length === 0) {
+      alert('Nenhum vendedor ativo cadastrado. Cadastre os nomes em "Vendedores ativos" primeiro.');
+      return;
+    }
+    if (ativos.length !== r.vendedoresAtivos) {
+      const seguir = confirm(
+        `A lista de vendedores ativos agora tem ${ativos.length} nome(s), mas esse mês foi calculado com ${r.vendedoresAtivos} vendedor(es). Gerar os recibos mesmo assim?`
+      );
+      if (!seguir) return;
+    }
+
+    const referente = `PRÊMIO MÊS ${MESES[r.month - 1].toUpperCase()}`;
+    const recibos = [
+      ...ativos.map((n) => ({ nome: n.nome, valor: r.valorPorVendedor, referente })),
+      { nome: 'Cris', valor: r.valorCris, referente },
+    ];
+
+    const chave = `${r.year}-${r.month}`;
+    setGerandoRecibo(chave);
+    try {
+      const res = await fetch('/api/bonificacao/recibos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recibos }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? 'Falha ao gerar recibos.');
+        return;
+      }
+      const bytes = Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      window.open(URL.createObjectURL(blob), '_blank');
+    } finally {
+      setGerandoRecibo(null);
+    }
+  }
 
   return (
     <div>
@@ -74,6 +129,7 @@ export default function BonificacaoPage() {
               <th>Vendedores</th>
               <th>Por vendedor</th>
               <th>Cris</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -88,11 +144,22 @@ export default function BonificacaoPage() {
                 <td>{r.vendedoresAtivos}</td>
                 <td>{brl(r.valorPorVendedor)}</td>
                 <td>{brl(r.valorCris)}</td>
+                <td>
+                  {r.valorPorVendedor > 0 && (
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => gerarRecibos(r)}
+                      disabled={gerandoRecibo === `${r.year}-${r.month}`}
+                    >
+                      {gerandoRecibo === `${r.year}-${r.month}` ? 'Gerando…' : 'Gerar recibos'}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {resultado.length === 0 && !carregando && (
               <tr>
-                <td colSpan={9} style={{ color: 'var(--muted)' }}>
+                <td colSpan={10} style={{ color: 'var(--muted)' }}>
                   Nenhum mês para calcular ainda — cadastre faturamento em Faturamento e vendedores ativos em Vendedores ativos.
                 </td>
               </tr>
