@@ -71,7 +71,9 @@ para as queries reais escritas a partir disso.
   vendedores ativos e histórico de bonificação calculada.
 - **Módulo Orçamento** ponta a ponta com dados de amostra: busca de
   produtos (full-text + dicionário de sinônimos), montagem do orçamento e
-  geração de PDF (com paginação real para orçamentos longos).
+  geração de PDF replicando o modelo real usado na Construmix (logo, dados
+  do cliente, tabela de itens, desconto, forma de pagamento, assinatura,
+  rodapé — com paginação real para orçamentos longos).
 - **Login do módulo Gestão** (senha + cookie de sessão assinado), isolado
   num grupo de rotas `(protected)` para o layout autenticado nunca embrulhar
   a própria página de login.
@@ -82,6 +84,12 @@ para as queries reais escritas a partir disso.
 - **Histórico de orçamentos** (`/gestao/orcamentos`), visível para gestão.
 - **Queries reais de faturamento de pedidos, vendas de cimento e catálogo**
   (`lib/postgres/`), escritas a partir do schema real do Postgres do Zeus.
+- **Comparativos entre empresas** (`/gestao/comparativos`): busca
+  faturamento de pedidos das 3 empresas (`lib/postgres/faturamentoPorEmpresa.ts`,
+  a mesma query da Construmix generalizada por empresa) e renderiza um
+  gráfico comparativo + tabela + exportação PNG. Cada empresa/mês sem
+  conexão configurada aparece como "não configurado" em vez de quebrar a
+  tela — hoje mostra isso pras 3, porque nenhuma conexão real existe ainda.
 
 ## Sobre acesso ao Postgres do Zeus
 
@@ -104,15 +112,21 @@ caminho continua valendo pra validar os números antes de confiar neles.
    `prevendas_devolucoes_*`, vistas no schema mas não inspecionadas) — e
    achamos pelo menos um produto de cimento fora do padrão de NCM
    ("CIMENTO BRANCO 1KG"). Comparar com números reais antes de confiar.
-2. **Modelo visual do PDF de orçamento já usado na Construmix** —
-   `lib/pdf.ts` gera um layout funcional simples que precisa ser
-   substituído pelo modelo real (cores, logo, cabeçalho/rodapé) quando o
-   Marcos compartilhar o exemplo.
-3. **Comparativos entre empresas** (`/gestao/comparativos`) — hoje é uma
-   tela explicando o bloqueio, porque ainda não foi testado contra os 3
-   bancos reais (ver item 1). O padrão de dashboard exportável (gráfico +
-   tabela + PNG) já existe em `/gestao/bonificacao/BonusCharts.tsx` e pode
-   ser reaproveitado aqui.
+2. **Logo oficial da Construmix em arquivo.** `lib/pdf.ts` já replica o
+   layout do orçamento real (compartilhado pelo Marcos), mas a logo usada
+   é o ícone simples de casa do site institucional (`components/BrandLogo.tsx`,
+   desenhado como vetor) — a logo oficial (com gradiente azul/verde e a
+   tagline "O seu Mix da Construção!") ainda não chegou como arquivo (só
+   apareceu colada na conversa, sem virar um arquivo de verdade). Quando
+   vier como anexo de fato, trocar o desenho vetorial por
+   `pdfDoc.embedPng()`/`embedJpg()` em `lib/pdf.ts`.
+3. **Testar `/gestao/comparativos` contra os 3 bancos reais** — a busca, o
+   gráfico e a tabela já estão implementados
+   (`lib/postgres/faturamentoPorEmpresa.ts`) e tratam graciosamente cada
+   empresa sem conexão configurada, mas ainda não foram validados com
+   dados de verdade. A query assume que SAMS e New House têm o mesmo
+   desenho de tabelas da Construmix (mesmo produto Zeus) — ainda não
+   confirmado inspecionando o schema delas diretamente.
 4. **IP local do servidor Postgres na rede da loja**, pra preencher
    `POSTGRES_*_HOST` em `.env.local` quando o app for instalado de verdade
    num computador da loja (ver seção acima).
@@ -127,16 +141,20 @@ internal-app/
       (protected)/       tudo que exige sessão: layout.tsx valida + nav;
                           painel, faturamento, vendedores, bonificação
                           (com BonusCharts.tsx), histórico de orçamentos,
-                          comparativos
+                          comparativos (com ComparativoChart.tsx)
     orcamento/        módulo aberto (busca produtos, monta orçamento, gera PDF)
-    api/               route handlers (auth, produtos/search, orcamento, bonificacao/calcular)
+    api/               route handlers (auth, produtos/search, orcamento,
+                        bonificacao/calcular, comparativos/faturamento)
   lib/
     bonus.ts           motor de cálculo da bonificação (puro, testado)
     auth.ts             sessão do módulo Gestão
-    pdf.ts               geração de PDF do orçamento
+    pdf.ts               geração de PDF do orçamento, replicando o modelo real
     db/                  banco próprio (SQLite): schema.sql + repositórios
     postgres/            conectores aos 3 bancos do Zeus, com as queries
                           reais de faturamento/cimento/catálogo já escritas
+                          (faturamentoPorEmpresa.ts é genérica, usada tanto
+                          pela bonificação da Construmix quanto pelos
+                          comparativos entre as 3 empresas)
   data/mock-catalog.json amostra de produtos para dev (NÃO é o catálogo real)
   scripts/seed-catalog.ts carrega o catálogo de amostra no SQLite local
 ```
@@ -150,7 +168,9 @@ internal-app/
    precisar.
 2. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
    periódica do catálogo (6.000+ produtos).
-3. Substituir o layout de `lib/pdf.ts` pelo modelo real da Construmix.
-4. Implementar `/gestao/comparativos` com os 3 bancos conectados.
+3. Conseguir a logo oficial da Construmix como arquivo (não colada no
+   chat) e trocar o desenho vetorial em `lib/pdf.ts` por `embedPng`.
+4. Testar `/gestao/comparativos` contra os 3 bancos reais e confirmar que
+   o schema de SAMS/New House bate com o da Construmix.
 5. Instalar o app num computador da loja com acesso à rede local do
    Postgres, e preencher `.env.local` com o IP local real.

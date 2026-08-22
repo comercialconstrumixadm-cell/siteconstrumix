@@ -1,5 +1,4 @@
-import { queryZeus } from './client';
-import { monthRange } from './dateRange';
+import { getFaturamentoMensalPorEmpresa } from './faturamentoPorEmpresa';
 
 export interface FaturamentoMensal {
   year: number;
@@ -8,8 +7,9 @@ export interface FaturamentoMensal {
 }
 
 /**
- * "Faturamento de pedidos" da Construmix — confirmado por inspeção direta
- * do schema em 2026-08 (não é o faturamento por nota fiscal, que fica em
+ * "Faturamento de pedidos" da Construmix, usado no cálculo do ABATIMENTO
+ * (ver lib/bonus.ts) — confirmado por inspeção direta do schema em
+ * 2026-08 (não é o faturamento por nota fiscal, que fica em
  * `saidasnf_faturamento`):
  *
  * - `prevendas` é o pedido (o que a Zeus chama de "prevenda"), com o valor
@@ -18,6 +18,10 @@ export interface FaturamentoMensal {
  *   usuário) marcando quando aquele pedido foi de fato faturado/fechado —
  *   é essa data que define "o mês" do faturamento, não a data do pedido.
  *
+ * A query em si é genérica (ver lib/postgres/faturamentoPorEmpresa.ts,
+ * também usada pelos comparativos entre empresas); este módulo só fixa a
+ * empresa em "construmix", que é a única usada na bonificação.
+ *
  * PENDENTE — validar com o Marcos antes de confiar nos números:
  * cancelamentos e devoluções (tabelas `prevendas_cancelamento` e
  * `prevendas_devolucoes_*`, vistas no schema mas ainda não inspecionadas)
@@ -25,17 +29,8 @@ export interface FaturamentoMensal {
  * query contra a planilha de referência (META_2026) antes de usar em
  * produção — ver checklist da especificação.
  */
-const FATURAMENTO_PEDIDOS_QUERY = `
-  SELECT COALESCE(SUM(pv.valortotal), 0) AS total
-  FROM prevendas pv
-  JOIN prevendas_faturamento pf ON pf.codprevenda = pv.codigo
-  WHERE pf.datahora >= $1 AND pf.datahora < $2
-`;
-
 export async function getFaturamentoPedidosMensal(year: number, month: number): Promise<number> {
-  const { inicio, fim } = monthRange(year, month);
-  const rows = await queryZeus<{ total: string }>('construmix', FATURAMENTO_PEDIDOS_QUERY, [inicio, fim]);
-  return Number(rows[0]?.total ?? 0);
+  return getFaturamentoMensalPorEmpresa('construmix', year, month);
 }
 
 /** Monta a série mensal de faturamento de pedidos (sem descontar cimento ainda) para um intervalo de meses. */
