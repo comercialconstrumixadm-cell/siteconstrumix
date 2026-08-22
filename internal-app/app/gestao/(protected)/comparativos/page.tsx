@@ -1,13 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import ComparativoChart from './ComparativoChart';
 import ConstrumixEvolucaoChart from './ConstrumixEvolucaoChart';
 import type { MesEvolucao, ResumoAnual, Tendencia } from '@/lib/postgres/construmixEvolucao';
+import type { FaturamentoFiscalMensalEmpresa } from '@/lib/postgres/faturamentoFiscalPorEmpresa';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
+
+const NOME_EMPRESA: Record<string, string> = {
+  construmix: 'Construmix',
+  sams: 'SAMS',
+  newhouse: 'New House',
+};
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pct = (n: number | null) => (n === null ? '—' : `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`);
@@ -31,6 +39,9 @@ export default function ComparativosPage() {
   const [mesA, setMesA] = useState<string>('');
   const [mesB, setMesB] = useState<string>('');
 
+  const [fiscal, setFiscal] = useState<FaturamentoFiscalMensalEmpresa[]>([]);
+  const [carregandoFiscal, setCarregandoFiscal] = useState(true);
+
   async function carregar() {
     setCarregando(true);
     setErro(null);
@@ -52,9 +63,23 @@ export default function ComparativosPage() {
     }
   }
 
+  async function carregarFiscal() {
+    setCarregandoFiscal(true);
+    try {
+      const res = await fetch('/api/comparativos/faturamento-fiscal');
+      const data = await res.json();
+      if (res.ok) setFiscal(data.resultado);
+    } finally {
+      setCarregandoFiscal(false);
+    }
+  }
+
   useEffect(() => {
     carregar();
+    carregarFiscal();
   }, []);
+
+  const fiscalSemDados = !carregandoFiscal && fiscal.length > 0 && fiscal.every((r) => r.erro);
 
   const comparacao = useMemo(() => {
     if (!dados || !mesA || !mesB) return null;
@@ -75,17 +100,57 @@ export default function ComparativosPage() {
     <div>
       <h1 style={{ marginBottom: 4 }}>Comparativos</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24, maxWidth: 680 }}>
-        Entre empresas: comparação pelo Faturamento Fiscal (aguardando fonte de dados). Entre meses:
-        evolução do faturamento de pré-venda da Construmix.
+        Entre empresas: comparação pelo Faturamento Fiscal. Entre meses: evolução do faturamento de
+        pré-venda da Construmix.
       </p>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 15, marginBottom: 8 }}>Comparativo fiscal entre empresas</h2>
-        <p style={{ color: 'var(--muted)', fontSize: 13 }}>
-          Ainda não implementado — depende de identificar a fonte do Faturamento Fiscal mensal no banco do
-          Zeus (pendente).
-        </p>
-      </div>
+      <h2 style={{ fontSize: 18, marginBottom: 8 }}>Comparativo fiscal entre empresas</h2>
+      <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>
+        Soma das notas fiscais com situação &quot;Autorizada&quot;, por mês de emissão.
+      </p>
+
+      {carregandoFiscal && <p style={{ color: 'var(--muted)' }}>Carregando…</p>}
+
+      {fiscalSemDados && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <p>
+            Nenhuma das 3 conexões PostgreSQL está configurada ainda — ver <code>.env.example</code>.
+          </p>
+        </div>
+      )}
+
+      {!carregandoFiscal && fiscal.length > 0 && (
+        <>
+          <ComparativoChart
+            dados={fiscal}
+            titulo="Faturamento fiscal por empresa, últimos meses"
+            containerId="comparativo-fiscal-chart"
+            arquivoPng="comparativo-fiscal-empresas.png"
+          />
+          <div className="card" style={{ marginBottom: 20 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Mês</th>
+                  <th>Faturamento fiscal</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fiscal.map((r) => (
+                  <tr key={`${r.empresa}-${r.year}-${r.month}`}>
+                    <td>{NOME_EMPRESA[r.empresa]}</td>
+                    <td>{MESES[r.month - 1]}/{r.year}</td>
+                    <td>{r.erro ? <span style={{ color: 'var(--muted)' }}>não configurado</span> : brl(r.faturamento ?? 0)}</td>
+                    <td>{r.erro ? '—' : r.quantidadeNotas}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {carregando && <p style={{ color: 'var(--muted)' }}>Carregando…</p>}
       {erro && (

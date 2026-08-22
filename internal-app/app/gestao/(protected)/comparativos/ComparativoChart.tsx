@@ -23,7 +23,19 @@ const EMPRESAS: { chave: FaturamentoMensalEmpresa['empresa']; nome: string; cor:
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 const brlCompacto = (n: number) => (n >= 1000 ? `R$ ${(n / 1000).toFixed(0)}k` : `R$ ${n.toFixed(0)}`);
 
-export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEmpresa[] }) {
+interface Props {
+  dados: FaturamentoMensalEmpresa[];
+  titulo?: string;
+  containerId?: string;
+  arquivoPng?: string;
+}
+
+export default function ComparativoChart({
+  dados,
+  titulo = 'Faturamento de pedidos por empresa, últimos meses',
+  containerId = 'comparativo-chart',
+  arquivoPng = 'comparativo-empresas.png',
+}: Props) {
   const meses = Array.from(new Set(dados.map((d) => `${d.year}-${d.month}`)))
     .sort()
     .map((key) => {
@@ -65,17 +77,17 @@ export default function ComparativoChart({ dados }: { dados: FaturamentoMensalEm
   return (
     <div className="card" style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ fontSize: 15 }}>Faturamento de pedidos por empresa, últimos meses</h2>
+        <h2 style={{ fontSize: 15 }}>{titulo}</h2>
         <button
           className="btn btn-secondary"
-          onClick={() => exportChartsAsPng('comparativo-chart', 'comparativo-empresas.png')}
+          onClick={() => exportChartsAsPng(containerId, arquivoPng)}
         >
           Baixar imagem (PNG)
         </button>
       </div>
 
-      <div id="comparativo-chart" style={{ position: 'relative' }}>
-        <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Faturamento de pedidos por empresa e mês">
+      <div id={containerId} style={{ position: 'relative' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label={titulo}>
           <rect x={0} y={0} width={width} height={height} fill={CHART_COLORS.surface} />
           <g transform={`translate(${margin.left},${margin.top})`}>
             {ticks.map((t) => {
