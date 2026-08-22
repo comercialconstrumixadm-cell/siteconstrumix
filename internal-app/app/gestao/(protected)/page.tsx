@@ -1,9 +1,12 @@
 import { listAbatimentoMensal } from '@/lib/db/abatimento';
 import { listBonusHistorico } from '@/lib/db/bonusHistory';
+import { countProdutos } from '@/lib/db/catalog';
+import SincronizarCatalogoButton from './SincronizarCatalogoButton';
 
 export default function PainelPage() {
   const abatimentos = listAbatimentoMensal();
   const bonusHistorico = listBonusHistorico() as any[];
+  const totalProdutos = countProdutos();
 
   return (
     <div>
@@ -25,6 +28,15 @@ export default function PainelPage() {
           <h2 style={{ fontSize: 15, marginBottom: 12 }}>Bonificações calculadas</h2>
           <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--green-700)' }}>{bonusHistorico.length}</p>
           <p style={{ color: 'var(--muted)', fontSize: 13 }}>Ver histórico completo em Bonificação.</p>
+        </div>
+        <div className="card">
+          <h2 style={{ fontSize: 15, marginBottom: 12 }}>Catálogo de produtos (Orçamento)</h2>
+          <p style={{ fontSize: 32, fontWeight: 700, color: 'var(--green-700)' }}>{totalProdutos}</p>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>
+            Produtos indexados pra busca no módulo Orçamento (só Construmix). Sincroniza sob
+            demanda por enquanto — sem rotina automática agendada ainda.
+          </p>
+          <SincronizarCatalogoButton />
         </div>
       </div>
     </div>
