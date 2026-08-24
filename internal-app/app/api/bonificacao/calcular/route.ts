@@ -14,7 +14,9 @@ export async function POST() {
 
   const abatimentos = listAbatimentoMensal();
   const vendedores = listVendedoresAtivos();
-  const resultado = calcularBonusSerie(abatimentos, vendedores);
+  // Trimestres reais da empresa começam em dezembro (Dez/Jan/Fev, Mar/Abr/Mai, ...),
+  // não em janeiro (confirmado com o Marcos em 2026-08 contra a planilha real).
+  const resultado = calcularBonusSerie(abatimentos, vendedores, 12);
   salvarBonusCalculado(resultado);
 
   return NextResponse.json({ resultado });
