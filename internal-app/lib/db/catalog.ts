@@ -53,7 +53,16 @@ export function buscarProdutos(termoLivre: string, limite = 20): (Produto & { re
 
   if (palavras.length === 0) return [];
 
-  const ftsQuery = palavras.map((p) => `${p.replace(/["*]/g, '')}*`).join(' OR ');
+  // Cada palavra vai entre aspas antes do "*" (prefixo) — sem isso, palavras
+  // com hífen (ex: "CP-II", nome real de cimento) quebram a sintaxe de
+  // consulta do FTS5, que trata "-" como operador. Aspas internas (ex: 6")
+  // são escapadas dobrando, como o FTS5 exige pra string literal.
+  const ftsQuery = palavras
+    .filter((p) => p.replace(/[*"]/g, '').length > 0)
+    .map((p) => `"${p.replace(/\*/g, '').replace(/"/g, '""')}"*`)
+    .join(' OR ');
+
+  if (!ftsQuery) return [];
 
   const rows = getDb()
     .prepare(
