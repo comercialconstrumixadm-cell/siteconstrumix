@@ -16,9 +16,9 @@ import type { Empresa } from './config';
  *   Processamento na SEFAZ, 6 Nenhuma, 7 Rejeitada, 8 Transmitida com
  *   pendência, 9 Validada, 10 Inutilizada).
  *
- * PENDENTE: assume que SAMS e New House têm o mesmo desenho de tabelas
- * (mesma ressalva de faturamentoPorEmpresa.ts) — só validado contra a
- * Construmix até agora.
+ * SAMS e New House confirmadas com o mesmo desenho de tabelas da Construmix
+ * (Marcos, 2026-08) — acesso liberado nos 3 bancos, mesma query serve pras
+ * 3 empresas.
  */
 const SITUACAO_AUTORIZADA = 2;
 

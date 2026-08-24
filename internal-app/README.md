@@ -114,16 +114,14 @@ caminho continua valendo pra validar os números antes de confiar neles.
    `prevendas_devolucoes_*`, vistas no schema mas não inspecionadas) — e
    achamos pelo menos um produto de cimento fora do padrão de NCM
    ("CIMENTO BRANCO 1KG"). Comparar com números reais antes de confiar.
-2. **Testar `/gestao/comparativos` contra os 3 bancos reais** — a busca, o
-   gráfico e a tabela já estão implementados
-   (`lib/postgres/faturamentoPorEmpresa.ts`) e tratam graciosamente cada
-   empresa sem conexão configurada, mas ainda não foram validados com
-   dados de verdade. A query assume que SAMS e New House têm o mesmo
-   desenho de tabelas da Construmix (mesmo produto Zeus) — ainda não
-   confirmado inspecionando o schema delas diretamente.
-3. **IP local do servidor Postgres na rede da loja**, pra preencher
-   `POSTGRES_*_HOST` em `.env.local` quando o app for instalado de verdade
-   num computador da loja (ver seção acima).
+   Relacionado: o faturamento de pedidos (pré-venda) já validado contra o
+   relatório real do Zeus fica ~1,7% acima (ver
+   `lib/postgres/faturamentoPorEmpresa.ts`) — resíduo ainda não investigado.
+2. **Códigos de forma de pagamento por empresa.** SAMS e New House já têm
+   acesso liberado e schema confirmado idêntico ao da Construmix (Marcos,
+   2026-08), mas os códigos numéricos de forma de pagamento usados pra
+   filtrar "venda de fato" (`FORMAS_PAGAMENTO_VALIDAS`) foram lidos só da
+   tela da Construmix — ainda não confirmado se valem pras outras duas.
 
 ## Arquitetura
 
@@ -155,14 +153,15 @@ internal-app/
 
 ## Próximos passos (ordem sugerida)
 
-1. Rodar `lib/postgres/construmixFaturamento.ts` e `cimentoFilter.ts`
-   contra o banco real (via pgAdmin, colando resultado nesta conversa, ou
-   já instalando o app na loja) e validar o ABATIMENTO calculado contra a
-   planilha META_2026 — ajustar a exclusão de cancelamentos/devoluções se
-   precisar.
-2. Ligar `lib/postgres/catalogSync.ts` de verdade e agendar a sincronização
-   periódica do catálogo (6.000+ produtos).
-3. Testar `/gestao/comparativos` contra os 3 bancos reais e confirmar que
-   o schema de SAMS/New House bate com o da Construmix.
-4. Instalar o app num computador da loja com acesso à rede local do
-   Postgres, e preencher `.env.local` com o IP local real.
+App já instalado e rodando num computador real da loja, catálogo
+sincronizado (~8.000 produtos), Faturamento Fiscal e faturamento de
+pedidos validados contra relatórios reais do Zeus na Construmix, e acesso
+liberado nos bancos de SAMS/New House (schema confirmado idêntico).
+
+1. Validar o ABATIMENTO calculado contra a planilha META_2026 e ajustar a
+   exclusão de cancelamentos/devoluções (ver pendência 1 acima).
+2. Confirmar os códigos de forma de pagamento de SAMS/New House (pendência
+   2 acima) e então validar `/gestao/comparativos` (fiscal e pré-venda)
+   com números reais das 3 empresas.
+3. Agendar a sincronização periódica do catálogo (hoje é sob demanda, via
+   botão no Painel).

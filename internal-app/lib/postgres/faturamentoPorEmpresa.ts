@@ -18,10 +18,14 @@ import type { Empresa } from './config';
  * relatório, resíduo provavelmente de itens que não são "Mercadoria para
  * Revenda" dentro de pré-vendas mistas (ainda não filtrado aqui).
  *
+ * SAMS e New House confirmadas com o mesmo desenho de tabelas da Construmix
+ * (Marcos, 2026-08) — acesso liberado nos 3 bancos.
+ *
  * PENDENTE:
- * - assume que SAMS e New House têm o mesmo desenho de tabelas E os
- *   mesmos códigos de forma de pagamento que a Construmix — só validado
- *   na Construmix até agora.
+ * - os códigos de FORMAS_PAGAMENTO_VALIDAS abaixo foram lidos direto da
+ *   tela da Construmix — ainda não confirmado se SAMS/New House usam os
+ *   mesmos códigos numéricos pras mesmas formas de pagamento (é
+ *   configuração por empresa, não estrutura de tabela).
  * - resíduo de ~1,7% não investigado (provável filtro por tipo de item
  *   faltando, precisaria de prevendasprod).
  */
