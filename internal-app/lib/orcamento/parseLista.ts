@@ -1,7 +1,35 @@
+import { buscarProdutos, type Produto } from '../db/catalog';
+
 export interface LinhaParseada {
   linhaOriginal: string;
   descricao: string;
   quantidade: number;
+}
+
+export interface ItemMatchLista {
+  linhaOriginal: string;
+  descricaoDetectada: string;
+  quantidade: number;
+  produto: (Produto & { relevancia: number }) | null;
+  candidatos: (Produto & { relevancia: number })[];
+}
+
+const MAX_LINHAS = 200;
+
+/** Interpreta o texto (colado ou extraído de um PDF) e casa cada linha com o catálogo. */
+export function casarListaComCatalogo(texto: string): ItemMatchLista[] {
+  return parseLista(texto)
+    .slice(0, MAX_LINHAS)
+    .map((linha) => {
+      const candidatos = buscarProdutos(linha.descricao, 5);
+      return {
+        linhaOriginal: linha.linhaOriginal,
+        descricaoDetectada: linha.descricao,
+        quantidade: linha.quantidade,
+        produto: candidatos[0] ?? null,
+        candidatos,
+      };
+    });
 }
 
 const RE_QTD_INICIO = /^(\d+(?:[.,]\d+)?)(?:\s*[xX]\s*|\s+)(.+)$/;

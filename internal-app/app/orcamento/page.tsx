@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface ProdutoBusca {
   codigo: string;
@@ -30,7 +30,9 @@ export default function OrcamentoPage() {
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
   const [listaTexto, setListaTexto] = useState('');
   const [processandoLista, setProcessandoLista] = useState(false);
+  const [processandoPdf, setProcessandoPdf] = useState(false);
   const [naoEncontrados, setNaoEncontrados] = useState<ItemNaoEncontrado[]>([]);
+  const inputPdfRef = useRef<HTMLInputElement>(null);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteTelefone, setClienteTelefone] = useState('');
   const [clienteEndereco, setClienteEndereco] = useState('');
@@ -92,6 +94,39 @@ export default function OrcamentoPage() {
     });
   }
 
+  function aplicarItensMatch(itensMatch: {
+    linhaOriginal: string;
+    descricaoDetectada: string;
+    quantidade: number;
+    produto: ProdutoBusca | null;
+    candidatos: ProdutoBusca[];
+  }[]) {
+    const semMatch: ItemNaoEncontrado[] = [];
+
+    setItens((atual) => {
+      let novos = [...atual];
+      for (const item of itensMatch) {
+        if (!item.produto) {
+          semMatch.push({ linhaOriginal: item.linhaOriginal, descricaoDetectada: item.descricaoDetectada });
+          continue;
+        }
+        const codigo = item.produto.codigo;
+        const existente = novos.find((i) => i.codigo === codigo);
+        if (existente) {
+          novos = novos.map((i) => (i.codigo === codigo ? { ...i, quantidade: i.quantidade + item.quantidade } : i));
+        } else {
+          novos = [
+            ...novos,
+            { ...item.produto, quantidade: item.quantidade, linhaOriginal: item.linhaOriginal, candidatos: item.candidatos },
+          ];
+        }
+      }
+      return novos;
+    });
+
+    setNaoEncontrados(semMatch);
+  }
+
   async function processarLista() {
     if (!listaTexto.trim()) return;
     setProcessandoLista(true);
@@ -103,39 +138,33 @@ export default function OrcamentoPage() {
         body: JSON.stringify({ texto: listaTexto }),
       });
       const data = await res.json();
-      const semMatch: ItemNaoEncontrado[] = [];
-
-      setItens((atual) => {
-        let novos = [...atual];
-        for (const item of (data.itens ?? []) as {
-          linhaOriginal: string;
-          descricaoDetectada: string;
-          quantidade: number;
-          produto: ProdutoBusca | null;
-          candidatos: ProdutoBusca[];
-        }[]) {
-          if (!item.produto) {
-            semMatch.push({ linhaOriginal: item.linhaOriginal, descricaoDetectada: item.descricaoDetectada });
-            continue;
-          }
-          const codigo = item.produto.codigo;
-          const existente = novos.find((i) => i.codigo === codigo);
-          if (existente) {
-            novos = novos.map((i) => (i.codigo === codigo ? { ...i, quantidade: i.quantidade + item.quantidade } : i));
-          } else {
-            novos = [
-              ...novos,
-              { ...item.produto, quantidade: item.quantidade, linhaOriginal: item.linhaOriginal, candidatos: item.candidatos },
-            ];
-          }
-        }
-        return novos;
-      });
-
-      setNaoEncontrados(semMatch);
+      if (!res.ok) {
+        alert(data.error ?? 'Falha ao processar a lista.');
+        return;
+      }
+      aplicarItensMatch(data.itens ?? []);
       setListaTexto('');
     } finally {
       setProcessandoLista(false);
+    }
+  }
+
+  async function processarPdf(arquivo: File) {
+    setProcessandoPdf(true);
+    setNaoEncontrados([]);
+    try {
+      const formData = new FormData();
+      formData.append('arquivo', arquivo);
+      const res = await fetch('/api/produtos/match-lote-pdf', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? 'Falha ao ler o PDF.');
+        return;
+      }
+      aplicarItensMatch(data.itens ?? []);
+    } finally {
+      setProcessandoPdf(false);
+      if (inputPdfRef.current) inputPdfRef.current.value = '';
     }
   }
 
@@ -185,11 +214,11 @@ export default function OrcamentoPage() {
       </p>
 
       <div className="card" style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 15, marginBottom: 4 }}>Colar lista de itens</h2>
+        <h2 style={{ fontSize: 15, marginBottom: 4 }}>Colar ou enviar lista de itens</h2>
         <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>
           Cole vários itens de uma vez, um por linha (ex: &quot;2 cimento CP2 50kg&quot;, &quot;telha x10&quot; ou só o
-          nome). O sistema tenta achar o produto e o código certo do Zeus sozinho — depois é só conferir e
-          corrigir o que estiver errado.
+          nome), ou envie um PDF com a lista. O sistema tenta achar o produto e o código certo do Zeus sozinho —
+          depois é só conferir e corrigir o que estiver errado.
         </p>
         <textarea
           value={listaTexto}
@@ -198,9 +227,23 @@ export default function OrcamentoPage() {
           rows={5}
           style={{ width: '100%', fontFamily: 'inherit', fontSize: 14, padding: 8, marginBottom: 8 }}
         />
-        <button className="btn" onClick={processarLista} disabled={processandoLista || !listaTexto.trim()}>
-          {processandoLista ? 'Processando…' : 'Processar lista automaticamente'}
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn" onClick={processarLista} disabled={processandoLista || !listaTexto.trim()}>
+            {processandoLista ? 'Processando…' : 'Processar lista automaticamente'}
+          </button>
+          <span style={{ color: 'var(--muted)', fontSize: 13 }}>ou</span>
+          <input
+            ref={inputPdfRef}
+            type="file"
+            accept="application/pdf"
+            disabled={processandoPdf}
+            onChange={(e) => {
+              const arquivo = e.target.files?.[0];
+              if (arquivo) processarPdf(arquivo);
+            }}
+          />
+          {processandoPdf && <span style={{ color: 'var(--muted)', fontSize: 13 }}>Lendo PDF…</span>}
+        </div>
 
         {naoEncontrados.length > 0 && (
           <div

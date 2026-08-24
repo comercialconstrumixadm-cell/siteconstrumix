@@ -6,6 +6,14 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // pdf-parse (extração de texto de PDF colado no Orçamento) carrega um
+  // arquivo worker (.mjs) num caminho relativo ao próprio pacote em tempo
+  // de execução — se o webpack empacota o pacote dentro do bundle da
+  // rota, esse arquivo não é encontrado. Mantendo como pacote externo, a
+  // rota carrega ele direto do node_modules (onde o worker está do lado).
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse'],
+  },
 };
 
 module.exports = nextConfig;
