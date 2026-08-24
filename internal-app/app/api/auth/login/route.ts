@@ -14,7 +14,11 @@ export async function POST(request: NextRequest) {
   response.cookies.set(SESSION_COOKIE, createSessionToken(), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Sempre roda em HTTP puro, na rede local da loja (sem TLS) — um
+    // cookie "secure" nunca é salvo pelo navegador fora de HTTPS/localhost,
+    // então marcar isso por NODE_ENV quebrava o login ao acessar por IP
+    // (ex: http://192.168.0.200:3000) em vez de localhost.
+    secure: false,
     path: '/',
     maxAge: 12 * 60 * 60,
   });
