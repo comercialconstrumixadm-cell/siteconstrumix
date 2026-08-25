@@ -21,6 +21,19 @@ interface ItemNaoEncontrado {
   descricaoDetectada: string;
 }
 
+interface ClienteBusca {
+  codigo: number;
+  nome: string;
+  apelido: string | null;
+  cpfCnpj: string | null;
+  telefone: string | null;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
+  bloqueado: boolean;
+}
+
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function OrcamentoPage() {
@@ -36,6 +49,9 @@ export default function OrcamentoPage() {
   const [clienteNome, setClienteNome] = useState('');
   const [clienteTelefone, setClienteTelefone] = useState('');
   const [clienteEndereco, setClienteEndereco] = useState('');
+  const [clienteResultados, setClienteResultados] = useState<ClienteBusca[]>([]);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  const [clienteBloqueado, setClienteBloqueado] = useState(false);
   const [vendedor, setVendedor] = useState('');
   const [desconto, setDesconto] = useState('0');
   const [formaPagamento, setFormaPagamento] = useState('Dinheiro');
@@ -57,6 +73,34 @@ export default function OrcamentoPage() {
     } finally {
       setBuscando(false);
     }
+  }
+
+  async function buscarCliente(nome: string) {
+    setClienteNome(nome);
+    setClienteBloqueado(false);
+    if (nome.trim().length < 2) {
+      setClienteResultados([]);
+      return;
+    }
+    setBuscandoCliente(true);
+    try {
+      const res = await fetch(`/api/clientes/search?q=${encodeURIComponent(nome)}`);
+      const data = await res.json();
+      setClienteResultados(data.clientes ?? []);
+    } finally {
+      setBuscandoCliente(false);
+    }
+  }
+
+  function selecionarCliente(c: ClienteBusca) {
+    setClienteNome(c.nome);
+    setClienteTelefone(c.telefone ?? '');
+    const enderecoCompleto = [c.endereco, c.bairro, c.cidade && c.estado ? `${c.cidade}/${c.estado}` : c.cidade]
+      .filter(Boolean)
+      .join(', ');
+    setClienteEndereco(enderecoCompleto);
+    setClienteBloqueado(c.bloqueado);
+    setClienteResultados([]);
   }
 
   function adicionarItem(produto: ProdutoBusca) {
@@ -399,9 +443,57 @@ export default function OrcamentoPage() {
             <label>Vendedor</label>
             <input value={vendedor} onChange={(e) => setVendedor(e.target.value)} />
           </div>
-          <div className="field">
+          <div className="field" style={{ position: 'relative' }}>
             <label>Cliente</label>
-            <input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
+            <input
+              value={clienteNome}
+              onChange={(e) => buscarCliente(e.target.value)}
+              placeholder="digite pra buscar no cadastro do Zeus…"
+              autoComplete="off"
+            />
+            {buscandoCliente && <p style={{ fontSize: 11, color: 'var(--muted)' }}>Buscando…</p>}
+            {clienteResultados.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  zIndex: 10,
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: 'var(--surface, #fff)',
+                  border: '1px solid #ddd',
+                  borderRadius: 6,
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                }}
+              >
+                {clienteResultados.map((c) => (
+                  <button
+                    key={c.codigo}
+                    type="button"
+                    onClick={() => selecionarCliente(c)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '8px 10px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                    }}
+                  >
+                    <div style={{ fontWeight: 600 }}>
+                      {c.nome} {c.bloqueado && <span style={{ color: '#c0392b' }}>(bloqueado)</span>}
+                    </div>
+                    <div style={{ color: 'var(--muted)', fontSize: 11 }}>
+                      {[c.telefone, c.cidade].filter(Boolean).join(' · ') || 'sem telefone/cidade cadastrado'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="field">
             <label>Telefone</label>
@@ -411,6 +503,13 @@ export default function OrcamentoPage() {
             <label>Endereço (opcional)</label>
             <input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
           </div>
+          {clienteBloqueado && (
+            <div
+              style={{ gridColumn: '1 / -1', padding: 10, borderRadius: 8, background: '#fdecea', border: '1px solid #f3b4ac', fontSize: 13 }}
+            >
+              Atenção: este cliente está marcado como <strong>bloqueado</strong> no Zeus.
+            </div>
+          )}
           <div className="field">
             <label>Desconto (R$)</label>
             <input type="number" min={0} step="0.01" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
