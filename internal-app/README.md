@@ -29,6 +29,28 @@ Testes da regra de bonificação (não dependem de banco nenhum):
 npm test
 ```
 
+## Rodando em produção (na loja, acessível de outros computadores)
+
+```bash
+npm run build
+npm run start
+```
+
+`npm run start` roda `server.js` (não o `next start` padrão), que sobe um
+servidor **HTTPS** com certificado autoassinado gerado automaticamente na
+primeira execução (cobre `localhost` + os IPs de rede local detectados no
+computador-servidor). Isso protege login/senha e dados de cliente
+trafegando pela rede da loja — sem isso, um cookie de sessão ou uma senha
+digitada em outro computador viajaria em texto puro até o servidor.
+
+Cada computador vai ver um aviso de "conexão não é segura" no navegador na
+primeira vez que acessar `https://<ip-do-servidor>:3000` — é esperado (é um
+certificado autoassinado, sem custo, não veio de uma autoridade
+certificadora pública), só precisa clicar em "Avançado" e depois em
+"Continuar mesmo assim"/"Prosseguir" uma vez por navegador. O certificado
+fica salvo em `internal-app/certs/` (fora do git — `.gitignore`) e é
+regenerado automaticamente se o IP do servidor mudar.
+
 ## O banco do Zeus (confirmado por inspeção direta em 2026-08)
 
 A especificação original supunha Firebird/InterBase — na prática o Zeus
@@ -64,7 +86,7 @@ para as queries reais escritas a partir disso.
 
 - **Cálculo de bonificação** (`lib/bonus.ts` + `lib/bonus.test.ts`): meta
   trimestral móvel, tabela de faixas/multiplicador, valor por vendedor e
-  regra da Cris — implementado e testado exatamente como fechado na
+  regra da Crislaine Santos — implementado e testado exatamente como fechado na
   especificação. Independe de qualquer banco.
 - **Banco de dados próprio da aplicação** (SQLite, `lib/db/`): histórico de
   orçamentos, índice de busca de produtos (FTS5), configuração mensal de

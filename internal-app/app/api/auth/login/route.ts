@@ -14,11 +14,14 @@ export async function POST(request: NextRequest) {
   response.cookies.set(SESSION_COOKIE, createSessionToken(), {
     httpOnly: true,
     sameSite: 'lax',
-    // Sempre roda em HTTP puro, na rede local da loja (sem TLS) — um
-    // cookie "secure" nunca é salvo pelo navegador fora de HTTPS/localhost,
-    // então marcar isso por NODE_ENV quebrava o login ao acessar por IP
-    // (ex: http://192.168.0.200:3000) em vez de localhost.
-    secure: false,
+    // Em produção o servidor roda com HTTPS (certificado autoassinado, ver
+    // server.js) mesmo na rede local da loja, então um cookie "secure" é
+    // salvo normalmente pelo navegador. Em dev (`next dev`, HTTP puro) fica
+    // false pra não quebrar o login local — um cookie "secure" nunca é
+    // salvo pelo navegador fora de HTTPS/localhost (foi exatamente esse
+    // bug, com o servidor de produção ainda em HTTP puro, que quebrou o
+    // login pela rede da loja antes do HTTPS existir).
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 12 * 60 * 60,
   });

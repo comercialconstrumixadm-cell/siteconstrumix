@@ -21,6 +21,9 @@
 .env.test.local
 .env.production.local
 
+# certificado HTTPS autoassinado, gerado localmente por server.js (ver README)
+/certs/
+
 # misc
 .DS_Store
 *.pem
