@@ -10,6 +10,7 @@ interface BonusMensal {
   abatimento: number;
   meta: number | null;
   valorTotalBonus: number;
+  valorCris: number;
 }
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -19,6 +20,7 @@ const SERIES = {
   abatimento: '#2a78d6',
   meta: '#1baf7a',
   bonus: '#eb6834',
+  acumulado: '#8a4fd1',
 };
 
 const brl = (n: number) =>
@@ -201,6 +203,85 @@ function ChartBonusTotal({ dados }: { dados: BonusMensal[] }) {
   );
 }
 
+/**
+ * Gráfico "Total investido em bonificação (acumulado)" — soma corrida do
+ * total pago (bônus dos vendedores + Crislaine) mês a mês, pra mostrar
+ * quanto já foi investido em bonificação desde o início do histórico.
+ */
+function ChartBonusAcumulado({ dados }: { dados: BonusMensal[] }) {
+  const width = 640;
+  const height = 220;
+  const margin = { top: 16, right: 16, bottom: 32, left: 56 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+
+  let corrida = 0;
+  const acumulado = dados.map((d) => {
+    corrida += d.valorTotalBonus + d.valorCris;
+    return { ...d, totalAcumulado: corrida };
+  });
+
+  const maxValor = niceMax(Math.max(1, ...acumulado.map((d) => d.totalAcumulado)));
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * maxValor);
+
+  const pontoX = (i: number) => (acumulado.length > 1 ? (i / (acumulado.length - 1)) * innerW : innerW / 2);
+  const pontoY = (v: number) => innerH - (v / maxValor) * innerH;
+  const pontos = acumulado.map((d, i) => `${pontoX(i)},${pontoY(d.totalAcumulado)}`).join(' ');
+  const areaPontos = `0,${innerH} ${pontos} ${innerW},${innerH}`;
+
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Total investido em bonificação, acumulado mês a mês">
+        <rect x={0} y={0} width={width} height={height} fill={CHART_COLORS.surface} />
+        <g transform={`translate(${margin.left},${margin.top})`}>
+          {ticks.map((t) => {
+            const ty = innerH - (t / maxValor) * innerH;
+            return (
+              <g key={t}>
+                <line x1={0} x2={innerW} y1={ty} y2={ty} stroke={CHART_COLORS.grid} strokeWidth={1} />
+                <text x={-8} y={ty} textAnchor="end" dominantBaseline="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
+                  {brlCompacto(t)}
+                </text>
+              </g>
+            );
+          })}
+
+          <polygon points={areaPontos} fill={SERIES.acumulado} fillOpacity={0.15} stroke="none" />
+          <polyline points={pontos} fill="none" stroke={SERIES.acumulado} strokeWidth={2} />
+
+          {acumulado.map((d, i) => {
+            const linhas = [
+              `${MESES_ABREV[d.month - 1]}/${String(d.year).slice(-2)}`,
+              `Acumulado: ${brl(d.totalAcumulado)}`,
+            ];
+            const onHover = (evt: React.MouseEvent) => {
+              const rect = svgRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              setTooltip({ x: evt.clientX - rect.left, y: evt.clientY - rect.top, linhas });
+            };
+            return (
+              <g key={`${d.year}-${d.month}`} onMouseMove={onHover} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'pointer' }}>
+                <circle cx={pontoX(i)} cy={pontoY(d.totalAcumulado)} r={9} fill="transparent" />
+                <circle cx={pontoX(i)} cy={pontoY(d.totalAcumulado)} r={3} fill={SERIES.acumulado} />
+                <text x={pontoX(i)} y={innerH + 16} textAnchor="middle" fontSize={10} fill={CHART_COLORS.textSecondary}>
+                  {MESES_ABREV[d.month - 1]}/{String(d.year).slice(-2)}
+                </text>
+              </g>
+            );
+          })}
+
+          <line x1={0} x2={innerW} y1={innerH} y2={innerH} stroke={CHART_COLORS.grid} strokeWidth={1} />
+        </g>
+      </svg>
+
+      {tooltip && <ChartTooltip tooltip={tooltip} />}
+    </div>
+  );
+}
+
 export default function BonusCharts({ dados }: { dados: BonusMensal[] }) {
   const dadosOrdenados = useMemo(
     () => dados.slice().sort((a, b) => a.year * 12 + a.month - (b.year * 12 + b.month)),
@@ -208,6 +289,8 @@ export default function BonusCharts({ dados }: { dados: BonusMensal[] }) {
   );
 
   if (dadosOrdenados.length === 0) return null;
+
+  const totalInvestido = dadosOrdenados.reduce((soma, d) => soma + d.valorTotalBonus + d.valorCris, 0);
 
   return (
     <div className="card" style={{ marginBottom: 20 }}>
@@ -220,12 +303,22 @@ export default function BonusCharts({ dados }: { dados: BonusMensal[] }) {
 
       <div id="bonus-charts" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div>
+          <p style={{ fontSize: 12, color: CHART_COLORS.textSecondary, marginBottom: 2 }}>
+            Total investido em bonificação (todos os meses)
+          </p>
+          <p style={{ fontSize: 22, fontWeight: 700 }}>{brl(totalInvestido)}</p>
+        </div>
+        <div>
           <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Abatimento x Meta por mês</p>
           <ChartAbatimentoMeta dados={dadosOrdenados} />
         </div>
         <div>
           <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Bônus total por mês</p>
           <ChartBonusTotal dados={dadosOrdenados} />
+        </div>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Total investido em bonificação (acumulado)</p>
+          <ChartBonusAcumulado dados={dadosOrdenados} />
         </div>
       </div>
     </div>

@@ -17,8 +17,8 @@ export default function VendedoresPage() {
       <h1 style={{ marginBottom: 4 }}>Vendedores ativos por mês</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24, maxWidth: 640 }}>
         Número de vendedores que dividem o bônus naquele mês específico (férias,
-        desligamentos e contratações mudam quem entra na divisão). A Cris (administrativo)
-        não entra nesta contagem — ela recebe 50% do valor calculado por vendedor.
+        desligamentos e contratações mudam quem entra na divisão). Crislaine Santos (administrativo)
+        não entra nesta contagem — ela recebe 50% do valor calculado por vendedor, quando ativa no mês.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>
@@ -45,6 +45,10 @@ export default function VendedoresPage() {
             <label>Observação (opcional)</label>
             <input name="observacao" type="text" placeholder="ex: saída da Fulana em 15/04" />
           </div>
+          <div className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <input id="crisAtiva" name="crisAtiva" type="checkbox" defaultChecked style={{ width: 'auto' }} />
+            <label htmlFor="crisAtiva" style={{ margin: 0 }}>Crislaine Santos ativa nesse mês</label>
+          </div>
           <button type="submit" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
             Salvar
           </button>
@@ -58,6 +62,7 @@ export default function VendedoresPage() {
                 <th>Ano</th>
                 <th>Mês</th>
                 <th>Vendedores</th>
+                <th>Crislaine</th>
                 <th>Observação</th>
               </tr>
             </thead>
@@ -67,12 +72,13 @@ export default function VendedoresPage() {
                   <td>{v.year}</td>
                   <td>{MESES[v.month - 1]}</td>
                   <td>{v.vendedoresAtivos}</td>
+                  <td>{v.crisAtiva ? 'Ativa' : 'Inativa'}</td>
                   <td>{v.observacao ?? '—'}</td>
                 </tr>
               ))}
               {vendedores.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={{ color: 'var(--muted)' }}>Nenhum mês configurado ainda.</td>
+                  <td colSpan={5} style={{ color: 'var(--muted)' }}>Nenhum mês configurado ainda.</td>
                 </tr>
               )}
             </tbody>

@@ -1,8 +1,22 @@
-import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import fs from 'node:fs';
+import path from 'node:path';
 import { valorPorExtenso } from './numeroExtenso';
 
 const EMPRESA = 'COMERCIAL CONSTRUMIX LTDA';
 const CIDADE = 'ARACAJU';
+
+/** Mesmo ícone usado no orçamento (ver lib/pdf.ts) — identidade visual da Construmix nos recibos. */
+const LOGO_ICONE_PATH = path.join('assets', 'logo-icone-construmix.png');
+const LOGO_ASPECT_RATIO = 318 / 253;
+
+let logoBytesCache: Buffer | null = null;
+function getLogoBytes(): Buffer {
+  if (!logoBytesCache) {
+    logoBytesCache = fs.readFileSync(path.join(process.cwd(), LOGO_ICONE_PATH));
+  }
+  return logoBytesCache;
+}
 
 const MESES_EXTENSO = [
   'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -43,7 +57,7 @@ function dataPorExtenso(data: Date): string {
   return `${CIDADE}, ${data.getDate()} de ${MESES_EXTENSO[data.getMonth()]} de ${data.getFullYear()}`;
 }
 
-function desenharRecibo(page: PDFPage, font: PDFFont, fontBold: PDFFont, recibo: Recibo) {
+function desenharRecibo(page: PDFPage, font: PDFFont, fontBold: PDFFont, logo: PDFImage, recibo: Recibo) {
   const margemBox = 60;
   const boxWidth = PAGE_WIDTH - margemBox * 2;
   const boxHeight = 260;
@@ -61,6 +75,10 @@ function desenharRecibo(page: PDFPage, font: PDFFont, fontBold: PDFFont, recibo:
 
   const padding = 36;
   let y = boxY + boxHeight - padding;
+
+  const logoHeight = 28;
+  const logoWidth = logoHeight * LOGO_ASPECT_RATIO;
+  page.drawImage(logo, { x: boxX + padding, y: y - logoHeight + 8, width: logoWidth, height: logoHeight });
 
   const titulo = 'Recibo de Pagamento';
   const tituloWidth = fontBold.widthOfTextAtSize(titulo, 15);
@@ -140,10 +158,11 @@ export async function gerarPdfRecibos(recibos: Recibo[]): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const logo = await pdfDoc.embedPng(getLogoBytes());
 
   for (const recibo of recibos) {
     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    desenharRecibo(page, font, fontBold, recibo);
+    desenharRecibo(page, font, fontBold, logo, recibo);
   }
 
   return pdfDoc.save();

@@ -9,8 +9,9 @@ export async function salvarVendedoresAtivos(formData: FormData) {
   const month = Number(formData.get('month'));
   const vendedoresAtivos = Number(formData.get('vendedoresAtivos'));
   const observacao = String(formData.get('observacao') ?? '');
+  const crisAtiva = formData.get('crisAtiva') === 'on';
 
-  setVendedoresAtivos(year, month, vendedoresAtivos, observacao || undefined);
+  setVendedoresAtivos(year, month, vendedoresAtivos, observacao || undefined, crisAtiva);
   revalidatePath('/gestao/vendedores');
 }
 

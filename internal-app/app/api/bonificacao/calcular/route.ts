@@ -4,6 +4,7 @@ import { calcularBonusSerie } from '@/lib/bonus';
 import { listAbatimentoMensal } from '@/lib/db/abatimento';
 import { listVendedoresAtivos } from '@/lib/db/vendedores';
 import { salvarBonusCalculado } from '@/lib/db/bonusHistory';
+import { getMetasOverrideMap } from '@/lib/db/metasTrimestrais';
 
 export const runtime = 'nodejs';
 
@@ -14,9 +15,10 @@ export async function POST() {
 
   const abatimentos = listAbatimentoMensal();
   const vendedores = listVendedoresAtivos();
+  const overrides = getMetasOverrideMap();
   // Trimestres reais da empresa começam em dezembro (Dez/Jan/Fev, Mar/Abr/Mai, ...),
   // não em janeiro (confirmado com o Marcos em 2026-08 contra a planilha real).
-  const resultado = calcularBonusSerie(abatimentos, vendedores, 12);
+  const resultado = calcularBonusSerie(abatimentos, vendedores, 12, overrides);
   salvarBonusCalculado(resultado);
 
   return NextResponse.json({ resultado });

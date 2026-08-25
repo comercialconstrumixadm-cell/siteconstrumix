@@ -27,6 +27,16 @@ interface BonusMensal {
   valorCris: number;
 }
 
+interface MetaVigenteInfo {
+  metaAtual: number | null;
+  blockAtualLabel: string;
+  proximaMetaSugerida: number | null;
+  proximaMetaOverride: number | null;
+  metaProximoTrimestre: number | null;
+  blockProximoLabel: string;
+  blockProximoKey: string;
+}
+
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pct = (n: number | null) => (n === null ? '—' : `${(n * 100).toFixed(1)}%`);
 
@@ -35,6 +45,9 @@ export default function BonificacaoPage() {
   const [carregando, setCarregando] = useState(false);
   const [nomes, setNomes] = useState<VendedorNome[]>([]);
   const [gerandoRecibo, setGerandoRecibo] = useState<string | null>(null);
+  const [meta, setMeta] = useState<MetaVigenteInfo | null>(null);
+  const [metaInput, setMetaInput] = useState('');
+  const [salvandoMeta, setSalvandoMeta] = useState(false);
 
   async function calcular() {
     setCarregando(true);
@@ -53,10 +66,43 @@ export default function BonificacaoPage() {
     if (res.ok) setNomes(data.nomes);
   }
 
+  async function carregarMeta() {
+    const res = await fetch('/api/bonificacao/meta');
+    const data = await res.json();
+    if (res.ok) {
+      setMeta(data);
+      const sugestao = data.metaProximoTrimestre;
+      setMetaInput(sugestao !== null ? String(Math.round(sugestao)) : '');
+    }
+  }
+
   useEffect(() => {
     calcular();
     carregarNomes();
+    carregarMeta();
   }, []);
+
+  async function salvarMeta() {
+    if (!meta) return;
+    const [blockYear, blockMonth] = meta.blockProximoKey.split('-').map(Number);
+    const valor = Number(metaInput);
+    if (!Number.isFinite(valor) || valor < 0) {
+      alert('Valor de meta inválido.');
+      return;
+    }
+    setSalvandoMeta(true);
+    try {
+      const res = await fetch('/api/bonificacao/meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blockYear, blockMonth, meta: valor }),
+      });
+      const data = await res.json();
+      if (res.ok) setMeta(data);
+    } finally {
+      setSalvandoMeta(false);
+    }
+  }
 
   async function gerarRecibos(r: BonusMensal) {
     const ativos = nomes.filter((n) => n.ativo);
@@ -74,7 +120,7 @@ export default function BonificacaoPage() {
     const referente = `PRÊMIO MÊS ${MESES[r.month - 1].toUpperCase()}`;
     const recibos = [
       ...ativos.map((n) => ({ nome: n.nome, valor: r.valorPorVendedor, referente })),
-      { nome: 'Cris', valor: r.valorCris, referente },
+      { nome: 'Crislaine Santos', valor: r.valorCris, referente },
     ];
 
     const chave = `${r.year}-${r.month}`;
@@ -106,13 +152,55 @@ export default function BonificacaoPage() {
           <p style={{ color: 'var(--muted)', marginBottom: 24, maxWidth: 640 }}>
             Meta trimestral móvel (média do ABATIMENTO do trimestre anterior) + faixas de
             multiplicador + 1% do faturamento real + divisão pelos vendedores ativos do mês.
-            A Cris recebe 50% do valor de um vendedor.
+            Crislaine Santos recebe 50% do valor de um vendedor.
           </p>
         </div>
         <button className="btn" onClick={calcular} disabled={carregando}>
           {carregando ? 'Calculando…' : 'Recalcular'}
         </button>
       </div>
+
+      {meta && (
+        <div className="card" style={{ marginBottom: 20, display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+              Meta do trimestre atual ({meta.blockAtualLabel})
+            </p>
+            <p style={{ fontSize: 24, fontWeight: 700 }}>
+              {meta.metaAtual === null ? 'sem histórico suficiente' : brl(Math.round(meta.metaAtual))}
+            </p>
+          </div>
+          <div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+              Meta do próximo trimestre ({meta.blockProximoLabel})
+              {meta.proximaMetaOverride !== null ? ' — ajustada manualmente' : ''}
+            </p>
+            {meta.proximaMetaSugerida === null && meta.proximaMetaOverride === null ? (
+              <p style={{ color: 'var(--muted)' }}>ainda sem os 3 meses do trimestre atual lançados</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    step="1"
+                    value={metaInput}
+                    onChange={(e) => setMetaInput(e.target.value)}
+                    style={{ width: 140 }}
+                  />
+                  <button className="btn btn-secondary" onClick={salvarMeta} disabled={salvandoMeta}>
+                    {salvandoMeta ? 'Salvando…' : 'Salvar'}
+                  </button>
+                </div>
+                {meta.proximaMetaSugerida !== null && (
+                  <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
+                    Sugestão automática (arredondada para múltiplo de R$5.000): {brl(meta.proximaMetaSugerida)}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <BonusCharts dados={resultado} />
 
@@ -128,7 +216,7 @@ export default function BonificacaoPage() {
               <th>Bônus total</th>
               <th>Vendedores</th>
               <th>Por vendedor</th>
-              <th>Cris</th>
+              <th>Crislaine</th>
               <th></th>
             </tr>
           </thead>

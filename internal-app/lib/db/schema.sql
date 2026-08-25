@@ -40,6 +40,19 @@ CREATE TABLE IF NOT EXISTS bonificacao_calculada (
   UNIQUE (year, month)
 );
 
+-- Override manual da meta trimestral de bonificação (ver lib/bonus.ts,
+-- getMetaVigente/calcularMetasTrimestrais). Por padrão a meta é calculada
+-- automaticamente (média do trimestre anterior), mas o Marcos pode lançar
+-- um valor manual pra um trimestre específico. block_year/block_month são
+-- o ano/mês do primeiro mês do trimestre (ex: Dez/2025 pro bloco Dez-Jan-Fev).
+CREATE TABLE IF NOT EXISTS metas_trimestrais_override (
+  block_year INTEGER NOT NULL,
+  block_month INTEGER NOT NULL CHECK (block_month BETWEEN 1 AND 12),
+  meta REAL NOT NULL,
+  atualizado_em TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (block_year, block_month)
+);
+
 -- Índice de busca do catálogo de produtos, sincronizado periodicamente do
 -- Zeus (ver lib/postgres/catalogSync.ts). FTS5 permite busca full-text
 -- rápida sobre 6.000+ produtos sem sobrecarregar o Postgres de produção a
@@ -109,6 +122,7 @@ CREATE TABLE IF NOT EXISTS orcamentos (
   itens_json TEXT NOT NULL, -- [{codigo, nome, unidade, quantidade, precoUnitario}]
   desconto REAL NOT NULL DEFAULT 0,
   forma_pagamento TEXT,
+  validade_dias INTEGER NOT NULL DEFAULT 10,
   total REAL NOT NULL,
   observacoes TEXT
 );
