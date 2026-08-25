@@ -15,6 +15,22 @@ export function listAbatimentoMensal(): MonthlyAbatimento[] {
   return rows;
 }
 
+export interface AbatimentoDetalhado extends MonthlyAbatimento {
+  faturamentoPedidos: number;
+  vendasCimento: number;
+}
+
+/** Igual a `listAbatimentoMensal`, mas com o detalhamento (faturamento bruto e abatimento de cimento) pra exibição. */
+export function listAbatimentoDetalhado(): AbatimentoDetalhado[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT year, month, faturamento_pedidos as faturamentoPedidos, vendas_cimento as vendasCimento, abatimento
+       FROM abatimento_mensal ORDER BY year, month`
+    )
+    .all() as AbatimentoDetalhado[];
+  return rows;
+}
+
 export function upsertAbatimentoMensal(
   year: number,
   month: number,

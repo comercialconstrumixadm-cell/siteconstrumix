@@ -1,4 +1,4 @@
-import { listAbatimentoMensal } from '@/lib/db/abatimento';
+import { listAbatimentoDetalhado } from '@/lib/db/abatimento';
 import { salvarFaturamentoMensal } from './actions';
 import { getFaturamentoFiscalDetalhadoMensal } from '@/lib/postgres/faturamentoFiscalPorEmpresa';
 
@@ -37,7 +37,10 @@ async function getFaturamentoFiscalRecenteConstrumix(quantidadeMeses = 6): Promi
 }
 
 export default async function FaturamentoPage() {
-  const abatimentos = listAbatimentoMensal();
+  const abatimentos = listAbatimentoDetalhado();
+  const totalFaturamentoBruto = abatimentos.reduce((soma, a) => soma + a.faturamentoPedidos, 0);
+  const totalVendasCimento = abatimentos.reduce((soma, a) => soma + a.vendasCimento, 0);
+  const totalAbatimento = abatimentos.reduce((soma, a) => soma + a.abatimento, 0);
   const anoAtual = new Date().getFullYear();
   const fiscalRecente = await getFaturamentoFiscalRecenteConstrumix();
 
@@ -120,7 +123,9 @@ export default async function FaturamentoPage() {
               <tr>
                 <th>Ano</th>
                 <th>Mês</th>
-                <th>ABATIMENTO</th>
+                <th>Faturamento bruto (pré-venda)</th>
+                <th>Abatimento de cimento</th>
+                <th>Com abatimento (ABATIMENTO)</th>
               </tr>
             </thead>
             <tbody>
@@ -128,15 +133,27 @@ export default async function FaturamentoPage() {
                 <tr key={`${a.year}-${a.month}`}>
                   <td>{a.year}</td>
                   <td>{MESES[a.month - 1]}</td>
-                  <td>{a.abatimento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td>{brl(a.faturamentoPedidos)}</td>
+                  <td>−{brl(a.vendasCimento)}</td>
+                  <td style={{ fontWeight: 700 }}>{brl(a.abatimento)}</td>
                 </tr>
               ))}
               {abatimentos.length === 0 && (
                 <tr>
-                  <td colSpan={3} style={{ color: 'var(--muted)' }}>Nenhum mês lançado ainda.</td>
+                  <td colSpan={5} style={{ color: 'var(--muted)' }}>Nenhum mês lançado ainda.</td>
                 </tr>
               )}
             </tbody>
+            {abatimentos.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={2} style={{ fontWeight: 700 }}>Total ({abatimentos.length} {abatimentos.length === 1 ? 'mês' : 'meses'})</td>
+                  <td style={{ fontWeight: 700 }}>{brl(totalFaturamentoBruto)}</td>
+                  <td style={{ fontWeight: 700 }}>−{brl(totalVendasCimento)}</td>
+                  <td style={{ fontWeight: 700 }}>{brl(totalAbatimento)}</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>
