@@ -51,6 +51,31 @@ certificadora pública), só precisa clicar em "Avançado" e depois em
 fica salvo em `internal-app/certs/` (fora do git — `.gitignore`) e é
 regenerado automaticamente se o IP do servidor mudar.
 
+### Instalar como app (ícone próprio, sem barra de endereço)
+
+O site tem um manifesto PWA (`public/manifest.json`) com o ícone da
+Construmix. No Chrome/Edge, com o site aberto, use a opção **"Instalar
+este site como aplicativo"** (ícone na barra de endereço ou menu ⋮ →
+Apps/Instalar) em cada computador que for usar — cria um ícone na área de
+trabalho e no menu Iniciar que abre o site numa janela própria, sem barra
+de endereço.
+
+### Ligar o servidor sozinho com o Windows
+
+Por padrão é preciso abrir um terminal e rodar `npm run start` toda vez.
+Pra deixar o servidor de pé sozinho quando o computador liga (só no
+computador que hospeda o servidor, não nos outros que só acessam):
+
+1. Crie um atalho pra `internal-app/scripts/iniciar-servidor.bat`.
+2. No atalho, clique com o botão direito → Propriedades → em "Executar"
+   escolha "Minimizada" (assim a janela do terminal não fica atrapalhando
+   na tela, mas continua acessível na barra de tarefas se precisar
+   conferir algum erro).
+3. Aperte `Win + R`, digite `shell:startup`, Enter — abre a pasta de
+   inicialização do Windows. Cole o atalho ali dentro.
+
+Da próxima vez que o computador ligar, o servidor sobe sozinho.
+
 ## O banco do Zeus (confirmado por inspeção direta em 2026-08)
 
 A especificação original supunha Firebird/InterBase — na prática o Zeus
