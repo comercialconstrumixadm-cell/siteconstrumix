@@ -111,6 +111,67 @@ CREATE TABLE IF NOT EXISTS vendedores_nomes (
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Bonificação de logística (motoristas e ajudantes) — módulo separado da
+-- bonificação de vendedores (ver lib/logistica.ts): mesma lógica de
+-- trimestre (meta = média do trimestre civil anterior, blocos Dez-Jan-Fev),
+-- mas o valor pago é fixo + variável só se bateu a meta, sem faixa de
+-- multiplicador.
+
+-- Cadastro de motoristas/ajudantes, mesmo padrão de vendedores_nomes: só
+-- "quem está ativo agora", usado pra emitir recibo nominal.
+CREATE TABLE IF NOT EXISTS logistica_pessoas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  papel TEXT NOT NULL CHECK (papel IN ('motorista', 'ajudante')),
+  ativo INTEGER NOT NULL DEFAULT 1,
+  criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Lançamento mensal: entregas realizadas + quantos motoristas/ajudantes
+-- entraram na divisão do mês (número, não a lista — igual vendedores_ativos)
+-- + override manual de "bateu a meta" (NULL = decide automático comparando
+-- entregas_realizadas com a meta do trimestre).
+CREATE TABLE IF NOT EXISTS logistica_mensal (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+  entregas_realizadas INTEGER NOT NULL DEFAULT 0,
+  motoristas_ativos INTEGER NOT NULL DEFAULT 0,
+  ajudantes_ativos INTEGER NOT NULL DEFAULT 0,
+  bateu_meta_manual INTEGER, -- NULL = automático; 0/1 = override manual
+  observacao TEXT,
+  atualizado_em TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (year, month)
+);
+
+-- Override manual da meta trimestral de entregas (mesmo mecanismo de
+-- metas_trimestrais_override, mas em quantidade de entregas, não R$).
+CREATE TABLE IF NOT EXISTS metas_logistica_override (
+  block_year INTEGER NOT NULL,
+  block_month INTEGER NOT NULL CHECK (block_month BETWEEN 1 AND 12),
+  meta INTEGER NOT NULL,
+  atualizado_em TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (block_year, block_month)
+);
+
+-- Histórico de bonificação de logística já calculada (mesmo padrão de
+-- bonificacao_calculada).
+CREATE TABLE IF NOT EXISTS logistica_calculada (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+  entregas_realizadas INTEGER NOT NULL,
+  meta INTEGER,
+  bateu_meta INTEGER,
+  motoristas_ativos INTEGER NOT NULL,
+  ajudantes_ativos INTEGER NOT NULL,
+  valor_por_motorista REAL NOT NULL,
+  valor_por_ajudante REAL NOT NULL,
+  valor_total_pago REAL NOT NULL,
+  calculado_em TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (year, month)
+);
+
 -- Histórico de orçamentos gerados no balcão.
 CREATE TABLE IF NOT EXISTS orcamentos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
