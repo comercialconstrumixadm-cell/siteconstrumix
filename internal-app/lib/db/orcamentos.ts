@@ -16,6 +16,7 @@ export interface NovoOrcamento {
   itens: ItemOrcamento[];
   desconto?: number;
   formaPagamento?: string;
+  validadeDias?: number;
   observacoes?: string;
 }
 
@@ -27,9 +28,9 @@ export function salvarOrcamento(orcamento: NovoOrcamento) {
   const info = getDb()
     .prepare(
       `INSERT INTO orcamentos
-         (vendedor, cliente_nome, cliente_telefone, cliente_endereco, itens_json, desconto, forma_pagamento, total, observacoes)
+         (vendedor, cliente_nome, cliente_telefone, cliente_endereco, itens_json, desconto, forma_pagamento, validade_dias, total, observacoes)
        VALUES
-         (@vendedor, @clienteNome, @clienteTelefone, @clienteEndereco, @itensJson, @desconto, @formaPagamento, @total, @observacoes)`
+         (@vendedor, @clienteNome, @clienteTelefone, @clienteEndereco, @itensJson, @desconto, @formaPagamento, @validadeDias, @total, @observacoes)`
     )
     .run({
       vendedor: orcamento.vendedor ?? null,
@@ -39,6 +40,7 @@ export function salvarOrcamento(orcamento: NovoOrcamento) {
       itensJson: JSON.stringify(orcamento.itens),
       desconto,
       formaPagamento: orcamento.formaPagamento ?? null,
+      validadeDias: orcamento.validadeDias ?? 10,
       total,
       observacoes: orcamento.observacoes ?? null,
     });
@@ -49,7 +51,7 @@ const SELECT_ORCAMENTO = `
   SELECT id, criado_em as criadoEm, vendedor, cliente_nome as clienteNome,
          cliente_telefone as clienteTelefone, cliente_endereco as clienteEndereco,
          itens_json as itensJson, desconto, forma_pagamento as formaPagamento,
-         total, observacoes
+         validade_dias as validadeDias, total, observacoes
   FROM orcamentos
 `;
 

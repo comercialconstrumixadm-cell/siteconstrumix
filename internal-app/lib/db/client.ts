@@ -37,20 +37,23 @@ export function getDb(): Database.Database {
  * Migração idempotente e bem pequena: só roda o `ALTER TABLE` se a coluna
  * ainda não existir.
  */
-function aplicarMigracoes(db: Database.Database) {
+function adicionarColunasFaltantes(db: Database.Database, tabela: string, colunas: [string, string][]) {
   const colunasExistentes = new Set(
-    (db.pragma("table_info('orcamentos')") as { name: string }[]).map((c) => c.name)
+    (db.pragma(`table_info('${tabela}')`) as { name: string }[]).map((c) => c.name)
   );
+  for (const [coluna, tipo] of colunas) {
+    if (!colunasExistentes.has(coluna)) {
+      db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${tipo}`);
+    }
+  }
+}
 
-  const colunasNovas: [string, string][] = [
+function aplicarMigracoes(db: Database.Database) {
+  adicionarColunasFaltantes(db, 'orcamentos', [
     ['cliente_endereco', 'TEXT'],
     ['desconto', 'REAL NOT NULL DEFAULT 0'],
     ['forma_pagamento', 'TEXT'],
-  ];
-
-  for (const [coluna, tipo] of colunasNovas) {
-    if (!colunasExistentes.has(coluna)) {
-      db.exec(`ALTER TABLE orcamentos ADD COLUMN ${coluna} ${tipo}`);
-    }
-  }
+    ['validade_dias', 'INTEGER NOT NULL DEFAULT 10'],
+  ]);
+  adicionarColunasFaltantes(db, 'vendedores_ativos', [['cris_ativa', 'INTEGER NOT NULL DEFAULT 1']]);
 }

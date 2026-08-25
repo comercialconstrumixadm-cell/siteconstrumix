@@ -23,11 +23,14 @@ export default async function GestaoLayout({ children }: { children: React.React
         }}
       >
         <strong style={{ marginBottom: 16 }}>Gestão Construmix</strong>
+        <Link href="/" style={{ ...navLinkStyle, color: 'rgba(255,255,255,.7)', fontSize: 13, marginBottom: 8 }}>
+          ← Início
+        </Link>
         <Link href="/gestao" style={navLinkStyle}>Painel</Link>
         <Link href="/gestao/faturamento" style={navLinkStyle}>Faturamento</Link>
         <Link href="/gestao/vendedores" style={navLinkStyle}>Vendedores ativos</Link>
         <Link href="/gestao/bonificacao" style={navLinkStyle}>Bonificação</Link>
-        <Link href="/gestao/orcamentos" style={navLinkStyle}>Histórico de orçamentos</Link>
+        <Link href="/gestao/logistica" style={navLinkStyle}>Bonificação logística</Link>
         <Link href="/gestao/comparativos" style={navLinkStyle}>Comparativos</Link>
         <form action="/api/auth/logout" method="post" style={{ marginTop: 'auto' }}>
           <button

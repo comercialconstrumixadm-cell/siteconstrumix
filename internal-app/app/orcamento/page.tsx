@@ -39,6 +39,7 @@ export default function OrcamentoPage() {
   const [vendedor, setVendedor] = useState('');
   const [desconto, setDesconto] = useState('0');
   const [formaPagamento, setFormaPagamento] = useState('Dinheiro');
+  const [validadeDias, setValidadeDias] = useState('10');
   const [gerando, setGerando] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -70,6 +71,10 @@ export default function OrcamentoPage() {
 
   function alterarQuantidade(codigo: string, quantidade: number) {
     setItens((atual) => atual.map((i) => (i.codigo === codigo ? { ...i, quantidade: Math.max(1, quantidade) } : i)));
+  }
+
+  function alterarPreco(codigo: string, preco: number) {
+    setItens((atual) => atual.map((i) => (i.codigo === codigo ? { ...i, preco: Math.max(0, preco) } : i)));
   }
 
   function removerItem(codigo: string) {
@@ -186,6 +191,7 @@ export default function OrcamentoPage() {
           clienteEndereco: clienteEndereco || undefined,
           desconto: descontoNum || undefined,
           formaPagamento: formaPagamento || undefined,
+          validadeDias: Number(validadeDias) || undefined,
           itens: itens.map((i) => ({
             codigo: i.codigo,
             nome: i.nome,
@@ -207,7 +213,7 @@ export default function OrcamentoPage() {
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: '0 auto', padding: 24 }}>
+    <main style={{ maxWidth: 960, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 4 }}>Orçamento</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24 }}>
         Digite o que o cliente pediu (ex: &quot;porta pintada branca&quot;) e escolha o produto certo.
@@ -334,7 +340,16 @@ export default function OrcamentoPage() {
                     style={{ width: 60 }}
                   />
                 </td>
-                <td>{brl(item.preco)}</td>
+                <td>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={item.preco}
+                    onChange={(e) => alterarPreco(item.codigo, Number(e.target.value))}
+                    style={{ width: 90 }}
+                  />
+                </td>
                 <td>{brl(item.preco * item.quantidade)}</td>
                 <td>
                   {item.candidatos && item.candidatos.length > 1 && (
@@ -399,6 +414,10 @@ export default function OrcamentoPage() {
           <div className="field">
             <label>Desconto (R$)</label>
             <input type="number" min={0} step="0.01" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Validade (dias)</label>
+            <input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(e.target.value)} />
           </div>
           <div className="field">
             <label>Forma de pagamento</label>

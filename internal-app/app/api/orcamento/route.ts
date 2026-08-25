@@ -5,10 +5,8 @@ import { gerarPdfOrcamento } from '@/lib/pdf';
 export const runtime = 'nodejs';
 
 /**
- * Sem GET aqui de propósito: o histórico de orçamentos (com nome/telefone/
- * endereço de cliente) só é exposto pela tela protegida /gestao/orcamentos,
- * que lê listOrcamentos() direto no servidor — uma rota GET pública aqui
- * vazaria esses dados sem exigir login.
+ * Sem GET aqui de propósito: /orcamento/historico lê listOrcamentos() direto
+ * no servidor (server component), não precisa de uma rota de API pra isso.
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as NovoOrcamento;
@@ -30,6 +28,7 @@ export async function POST(request: NextRequest) {
     itens: JSON.parse(salvo.itensJson),
     desconto: salvo.desconto ?? 0,
     formaPagamento: salvo.formaPagamento,
+    validoPorDias: salvo.validadeDias ?? 10,
     total,
     observacoes: salvo.observacoes,
   });

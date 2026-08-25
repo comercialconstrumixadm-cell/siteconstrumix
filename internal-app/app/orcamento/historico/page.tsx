@@ -25,9 +25,8 @@ export default function HistoricoOrcamentosPage({
     <div>
       <h1 style={{ marginBottom: 4 }}>Histórico de orçamentos</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 24, maxWidth: 640 }}>
-        Orçamentos gerados no balcão (módulo aberto <code>/orcamento</code>), guardados no
-        banco próprio da aplicação. Ficam salvos aqui indefinidamente — não há apagamento
-        automático.
+        Orçamentos gerados no balcão, guardados no banco próprio da aplicação. Ficam salvos aqui
+        indefinidamente — não há apagamento automático.
       </p>
 
       <form method="get" className="card" style={{ marginBottom: 20 }}>
@@ -48,7 +47,7 @@ export default function HistoricoOrcamentosPage({
         </div>
         {temFiltro && (
           <p style={{ marginTop: 8 }}>
-            <a href="/gestao/orcamentos" style={{ fontSize: 13 }}>Limpar filtros</a>
+            <a href="/orcamento/historico" style={{ fontSize: 13 }}>Limpar filtros</a>
           </p>
         )}
       </form>
