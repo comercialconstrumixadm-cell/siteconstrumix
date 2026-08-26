@@ -41,6 +41,8 @@ export default function ComparativosPage() {
 
   const [fiscal, setFiscal] = useState<FaturamentoFiscalMensalEmpresa[]>([]);
   const [carregandoFiscal, setCarregandoFiscal] = useState(true);
+  const anoAtual = new Date().getFullYear();
+  const [anoFiscal, setAnoFiscal] = useState(anoAtual);
 
   async function carregar() {
     setCarregando(true);
@@ -63,10 +65,10 @@ export default function ComparativosPage() {
     }
   }
 
-  async function carregarFiscal() {
+  async function carregarFiscal(ano: number) {
     setCarregandoFiscal(true);
     try {
-      const res = await fetch('/api/comparativos/faturamento-fiscal');
+      const res = await fetch(`/api/comparativos/faturamento-fiscal?year=${ano}`);
       const data = await res.json();
       if (res.ok) setFiscal(data.resultado);
     } finally {
@@ -76,8 +78,11 @@ export default function ComparativosPage() {
 
   useEffect(() => {
     carregar();
-    carregarFiscal();
   }, []);
+
+  useEffect(() => {
+    carregarFiscal(anoFiscal);
+  }, [anoFiscal]);
 
   const fiscalSemDados = !carregandoFiscal && fiscal.length > 0 && fiscal.every((r) => r.erro);
 
@@ -130,7 +135,17 @@ export default function ComparativosPage() {
         pré-venda da Construmix.
       </p>
 
-      <h2 style={{ fontSize: 18, marginBottom: 8 }}>Comparativo fiscal entre empresas</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ fontSize: 18 }}>Comparativo fiscal entre empresas</h2>
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label style={{ fontSize: 12 }}>Ano</label>
+          <select value={anoFiscal} onChange={(e) => setAnoFiscal(Number(e.target.value))}>
+            {Array.from({ length: 5 }, (_, i) => anoAtual - i).map((ano) => (
+              <option key={ano} value={ano}>{ano}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>
         Soma das notas fiscais com situação &quot;Autorizada&quot;, por mês de emissão.
       </p>
