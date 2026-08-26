@@ -81,6 +81,32 @@ export default function ComparativosPage() {
 
   const fiscalSemDados = !carregandoFiscal && fiscal.length > 0 && fiscal.every((r) => r.erro);
 
+  const EMPRESAS = ['construmix', 'sams', 'newhouse'] as const;
+
+  const fiscalPivot = useMemo(() => {
+    const porMes = new Map<string, { year: number; month: number; porEmpresa: Record<string, FaturamentoFiscalMensalEmpresa>; totalMes: number }>();
+    for (const r of fiscal) {
+      const key = `${r.year}-${r.month}`;
+      if (!porMes.has(key)) {
+        porMes.set(key, { year: r.year, month: r.month, porEmpresa: {}, totalMes: 0 });
+      }
+      const linha = porMes.get(key)!;
+      linha.porEmpresa[r.empresa] = r;
+      if (!r.erro) linha.totalMes += r.faturamento ?? 0;
+    }
+    return Array.from(porMes.values()).sort((a, b) => a.year * 12 + a.month - (b.year * 12 + b.month));
+  }, [fiscal]);
+
+  const totaisPorEmpresa = useMemo(() => {
+    const totais: Record<string, number> = { construmix: 0, sams: 0, newhouse: 0 };
+    for (const r of fiscal) {
+      if (!r.erro) totais[r.empresa] = (totais[r.empresa] ?? 0) + (r.faturamento ?? 0);
+    }
+    return totais;
+  }, [fiscal]);
+
+  const totalGeral = EMPRESAS.reduce((soma, emp) => soma + totaisPorEmpresa[emp], 0);
+
   const comparacao = useMemo(() => {
     if (!dados || !mesA || !mesB) return null;
     const a = dados.serie.find((m) => `${m.year}-${m.month}` === mesA);
@@ -131,22 +157,40 @@ export default function ComparativosPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Empresa</th>
                   <th>Mês</th>
-                  <th>Faturamento fiscal</th>
-                  <th>Notas</th>
+                  {EMPRESAS.map((emp) => (
+                    <th key={emp}>{NOME_EMPRESA[emp]}</th>
+                  ))}
+                  <th>Total do mês</th>
                 </tr>
               </thead>
               <tbody>
-                {fiscal.map((r) => (
-                  <tr key={`${r.empresa}-${r.year}-${r.month}`}>
-                    <td>{NOME_EMPRESA[r.empresa]}</td>
-                    <td>{MESES[r.month - 1]}/{r.year}</td>
-                    <td>{r.erro ? <span style={{ color: 'var(--muted)' }}>não configurado</span> : brl(r.faturamento ?? 0)}</td>
-                    <td>{r.erro ? '—' : r.quantidadeNotas}</td>
+                {fiscalPivot.map((linha) => (
+                  <tr key={`${linha.year}-${linha.month}`}>
+                    <td>{MESES[linha.month - 1]}/{linha.year}</td>
+                    {EMPRESAS.map((emp) => {
+                      const r = linha.porEmpresa[emp];
+                      return (
+                        <td key={emp}>
+                          {!r ? '—' : r.erro ? <span style={{ color: 'var(--muted)' }}>não configurado</span> : brl(r.faturamento ?? 0)}
+                        </td>
+                      );
+                    })}
+                    <td style={{ fontWeight: 700 }}>{brl(linha.totalMes)}</td>
                   </tr>
                 ))}
               </tbody>
+              {fiscalPivot.length > 0 && (
+                <tfoot>
+                  <tr>
+                    <td style={{ fontWeight: 700 }}>Total do período</td>
+                    {EMPRESAS.map((emp) => (
+                      <td key={emp} style={{ fontWeight: 700 }}>{brl(totaisPorEmpresa[emp])}</td>
+                    ))}
+                    <td style={{ fontWeight: 700 }}>{brl(totalGeral)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </>

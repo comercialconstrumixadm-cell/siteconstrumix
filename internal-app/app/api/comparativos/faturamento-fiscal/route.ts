@@ -19,6 +19,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
   }
 
-  const resultado = await getFaturamentoFiscalComparativo(['construmix', 'sams', 'newhouse'], ultimosMeses(6));
+  const resultado = await getFaturamentoFiscalComparativo(['construmix', 'sams', 'newhouse'], ultimosMeses(12));
   return NextResponse.json({ resultado });
 }
