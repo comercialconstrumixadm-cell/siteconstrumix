@@ -32,6 +32,7 @@ export default async function GestaoLayout({ children }: { children: React.React
         <Link href="/gestao/bonificacao" style={navLinkStyle}>Bonificação</Link>
         <Link href="/gestao/logistica" style={navLinkStyle}>Bonificação logística</Link>
         <Link href="/gestao/comparativos" style={navLinkStyle}>Comparativos</Link>
+        <Link href="/gestao/impostos" style={navLinkStyle}>Impostos</Link>
         <form action="/api/auth/logout" method="post" style={{ marginTop: 'auto' }}>
           <button
             type="submit"
