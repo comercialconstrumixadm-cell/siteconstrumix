@@ -5,6 +5,7 @@ import { listAbatimentoMensal } from '@/lib/db/abatimento';
 import { listVendedoresAtivos } from '@/lib/db/vendedores';
 import { salvarBonusCalculado } from '@/lib/db/bonusHistory';
 import { getMetasOverrideMap } from '@/lib/db/metasTrimestrais';
+import { sincronizarAbatimentoRecente } from '@/lib/postgres/faturamentoSync';
 
 export const runtime = 'nodejs';
 
@@ -12,6 +13,11 @@ export async function POST() {
   if (!(await requireSession())) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
   }
+
+  // Garante que o mês corrente (e qualquer mês recente sem lançamento) já
+  // está sincronizado com o Zeus antes de calcular — quem entra direto na
+  // Bonificação sem passar por Faturamento também vê o mês atual.
+  await sincronizarAbatimentoRecente();
 
   const abatimentos = listAbatimentoMensal();
   const vendedores = listVendedoresAtivos();

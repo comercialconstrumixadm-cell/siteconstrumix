@@ -1,6 +1,7 @@
 import { listAbatimentoDetalhado } from '@/lib/db/abatimento';
 import { salvarFaturamentoMensal } from './actions';
 import { getFaturamentoFiscalDetalhadoMensal } from '@/lib/postgres/faturamentoFiscalPorEmpresa';
+import { sincronizarAbatimentoRecente } from '@/lib/postgres/faturamentoSync';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -37,6 +38,10 @@ async function getFaturamentoFiscalRecenteConstrumix(quantidadeMeses = 6): Promi
 }
 
 export default async function FaturamentoPage() {
+  // Preenche/atualiza os meses recentes (e sempre o mês corrente) direto do
+  // Zeus antes de exibir — sem isso, um mês novo só existia depois de
+  // alguém lançar manualmente aqui (ver lib/postgres/faturamentoSync.ts).
+  await sincronizarAbatimentoRecente();
   const abatimentos = listAbatimentoDetalhado();
   const totalFaturamentoBruto = abatimentos.reduce((soma, a) => soma + a.faturamentoPedidos, 0);
   const totalVendasCimento = abatimentos.reduce((soma, a) => soma + a.vendasCimento, 0);
