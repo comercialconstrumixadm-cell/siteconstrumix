@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# app database (dados locais/dev)
+/data/*.sqlite
+/data/*.sqlite-journal
+/data/*.sqlite-wal
+/data/*.sqlite-shm
+
+# typescript incremental build info
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# certificado HTTPS autoassinado, gerado localmente por server.js (ver README)
+/certs/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
